@@ -172,8 +172,10 @@ ul.caveats li { margin-bottom:7px; }
         while the composite sat in pessimism (&lt;40) against <span id="read-bh">—</span>/ann buy-and-hold — pessimism days also run higher volatility, and part of the
         gap is risk; the edge survives risk adjustment. Optimism (&gt;70) drags for 0–3 months and washes out by 6–12. First touches of a zone are not significant
         against random-entry nulls; the one exception is a <b>fresh drop below 25</b>, significant at 1–3 months (Signal value tab). The sell side is weaker than
-        the buy side and only bites when financial conditions are tight — treat &gt;70 as trim-and-tighten, never short. Shaded green spans mark breadth thrusts
-        (10-day advances/declines &gt; 1.9, held ~3 months). <b>In extended bears the pessimism state loses money in absolute terms</b> — see Method &amp; caveats.</div>
+        the buy side and only bites when financial conditions are tight — treat &gt;70 as trim-and-tighten, never short. <b>Green shading in the price panel marks
+        breadth thrusts</b> — 10-day advancing/declining issues exceeding 1.9, held ~3 months. Thrusts are a one-sided event: a surge of broad buying that
+        historically marks durable bottoms, with no symmetric bearish counterpart — hence no red shading. <b>In extended bears the pessimism state loses money
+        in absolute terms</b> — see Method &amp; caveats.</div>
       </div></div>
       <div class="card"><div class="card-head"><h3>Last 10 sessions</h3></div>
         <div class="card-body tight"><table class="grid" id="tbl-recent"></table></div></div>
@@ -237,6 +239,18 @@ ul.caveats li { margin-bottom:7px; }
 
   <!-- METHOD -->
   <div class="panel" id="p-method">
+    <div class="card">
+      <div class="card-head"><h3>Why 40 / 70 and 5-day smoothing</h3><span class="note">signal quality vs turnover — every tested combination</span></div>
+      <div class="card-body tight"><div id="chart-why" style="height:360px"></div></div>
+      <div class="card-body" style="border-top:1px solid var(--bd)">
+        <ul class="caveats">
+          <li><b>Deeper zones (40/70) raise the quality of every read.</b> Versus 45/65, the pessimism-minus-optimism 3-month spread improves in BOTH the pre-2016 and post-2016 eras, at the price of rarer signals (~17% of days in pessimism instead of ~25%).</li>
+          <li><b>Smoothing is a turnover device, not an edge device.</b> 5 days cuts zone flips from 55 to 15 a year with no loss of test-era spread — but its pre-2016 margin is statistically zero, so it is packaging. Heavier smoothing (10–21d) keeps cutting turnover while lagging the 6-month reads.</li>
+          <li><b>The choice was made by a frozen rule, committed before results</b> (train AND test spread bars, sign checks, a flips ceiling; ties to fewest flips). 2 of 13 challengers qualified; this cell won the tie-break.</li>
+          <li><b>These parameters tune the lens, not a strategy.</b> Risk metrics for actually trading the zones — Sharpe, drawdown, bear windows — are in the overlay card on the Signal value tab, where the tested ±20pp tilt failed its pre-registered bar and was not adopted.</li>
+        </ul>
+      </div>
+    </div>
     <div class="card">
       <div class="card-head"><h3>Pre-registered transformation grid — 14 cells, frozen adoption rule</h3></div>
       <div class="card-body tight"><table class="grid" id="tbl-grid"></table>
@@ -314,6 +328,9 @@ function boot(D){
     {x:S.dates,y:S.spx,name:'S&P 500 (log, Yahoo)',type:'scatter',mode:'lines',line:{color:'#2563eb',width:1.6},xaxis:'x',yaxis:'y',connectgaps:true},
     {x:S.dates,y:S.raw,name:'composite (unsmoothed)',type:'scatter',mode:'lines',line:{color:'#b0b0a8',width:1},xaxis:'x',yaxis:'y2'},
     {x:S.dates,y:S.sig,name:'composite (5d)',type:'scatter',mode:'lines',line:{color:'#e8590c',width:2.4},xaxis:'x',yaxis:'y2'},
+    // legend-only swatch explaining the green shading (renders no points)
+    {x:[null],y:[null],type:'scatter',mode:'markers',marker:{size:11,color:'rgba(26,135,84,0.25)',symbol:'square'},
+     name:'breadth thrust (10d adv/dec > 1.9, held ~3m) — bullish only, no bearish counterpart',hoverinfo:'skip',xaxis:'x',yaxis:'y'},
   ];
   const lay = JSON.parse(JSON.stringify(CL));
   Object.assign(lay,{
@@ -323,7 +340,7 @@ function boot(D){
     yaxis:Object.assign(lay.yaxis,{type:'log',domain:[0.55,1],nticks:7}),
     yaxis2:{domain:[0,0.48],range:[0,100],side:'right',gridcolor:'#f0f0ea',linecolor:'#d5d3ca',tickfont:{size:11,family:'JetBrains Mono'},dtick:20,automargin:true},
     annotations:[
-      {x:1,y:c.sig,xref:'paper',yref:'y2',text:' '+fmt(c.sig,1)+' ',showarrow:false,xanchor:'left',xshift:4,font:{size:11.5,family:'JetBrains Mono',color:'#fff'},bgcolor:c.zone_sig==='pessimism'?'#1a8754':(c.zone_sig==='optimism'?'#c0392b':'#8a8a82'),borderpad:3},
+      {x:1,y:c.sig,xref:'paper',yref:'y2',text:' '+fmt(c.sig,1)+' ',showarrow:false,xanchor:'right',xshift:-6,font:{size:11.5,family:'JetBrains Mono',color:'#fff'},bgcolor:c.zone_sig==='pessimism'?'#1a8754':(c.zone_sig==='optimism'?'#c0392b':'#8a8a82'),borderpad:3},
       {x:0.005,y:96,xref:'paper',yref:'y2',text:'excessive optimism > 70',showarrow:false,xanchor:'left',font:{size:11.5,color:'#c0392b'}},
       {x:0.005,y:7,xref:'paper',yref:'y2',text:'extreme pessimism < 40',showarrow:false,xanchor:'left',font:{size:11.5,color:'#1a8754'}}
     ]
@@ -393,7 +410,9 @@ function boot(D){
   const full = D.fwd.filter(r=>r.span==='full');
   const colors = {pessimism:'#1a8754', neutral:'#999999', optimism:'#c0392b'};
   const bars = ['pessimism','neutral','optimism'].map(z=>({
-    x:HS, y:HS.map(h=>(full.find(r=>r.zone===z&&r.h===h)||{}).mean), name:z, type:'bar', marker:{color:colors[z]}
+    x:HS, y:HS.map(h=>(full.find(r=>r.zone===z&&r.h===h)||{}).mean), name:z, type:'bar', marker:{color:colors[z]},
+    texttemplate:'%{y:.1f}%', textposition:'outside', cliponaxis:false,
+    textfont:{size:MOB?9:11, family:'JetBrains Mono', color:'#5c5c56'}
   }));
   bars.push({x:HS, y:HS.map(h=>(full.find(r=>r.zone==='ALL'&&r.h===h)||{}).mean), name:'unconditional', type:'scatter', mode:'markers', marker:{symbol:'line-ew-open',size:26,color:'#1a1a18',line:{width:2}}});
   const flay = JSON.parse(JSON.stringify(CL));
@@ -520,6 +539,37 @@ function boot(D){
     '<b>Frozen rule</b> (committed before results): adopt only if train AND test 3m conditional spreads ≥ 1.15× baseline, 1m/6m test spreads positive, zone flips ≤ 1.25× baseline; ties → fewest flips. ' +
     '2 of 13 challengers qualified; the 5-day / 40-70 cell was adopted on fewest flips with a train-side margin that is statistically indistinguishable from zero. ' +
     '<b>Honest read: the 40/70 zone lines carry the evidence; the 5-day smoothing is turnover packaging</b> — and because the rule consumed the post-2015 window, the adopted cell has no untouched holdout. Spreads are day-level means over overlapping windows.';
+
+  // ---------- why-these-parameters scatter (Method tab) ----------
+  (function(){
+    const fam = n2 => n2.includes('40_70') ? 'zones 40/70' : (n2.includes('45_65') ? 'zones 45/65' : (n2.startsWith('B_') ? 'continuous variant' : 'occupancy-matched'));
+    const famCol = {'zones 40/70':'#2563eb','zones 45/65':'#8a8a82','occupancy-matched':'#0891b2','continuous variant':'#7c3aed'};
+    const byFam = {};
+    D.grid.forEach(g => { const f = fam(g.cell); (byFam[f]=byFam[f]||[]).push(g); });
+    const traces2 = Object.entries(byFam).map(([f, rows]) => ({
+      x: rows.map(r=>r.flips_yr), y: rows.map(r=>r.spread3m_test),
+      text: rows.map(r=>(r.cell.match(/S(\d+)/)||['','?'])[1]+'d'),
+      customdata: rows.map(r=>[r.cell, r.spread3m_train, r.pess_gpa]),
+      hovertemplate:'%{customdata[0]}<br>test spread %{y:.2f}pp · train %{customdata[1]:.2f}pp<br>flips/yr %{x:.1f} · pessimism GPA %{customdata[2]:.1f}%<extra></extra>',
+      name: f, type:'scatter', mode:'markers+text', textposition:'top center',
+      textfont:{size:10.5, family:'JetBrains Mono', color:'#8a8a82'},
+      marker:{size:11, color:famCol[f], opacity:0.9,
+        line:{width: rows.map(r=>r.cell==='S5_fixed_40_70'?2.5:0), color:'#1a1a18'}}
+    }));
+    const base = D.grid.find(g=>g.cell==='S1_fixed_45_65');
+    const adopted = D.grid.find(g=>g.cell==='S5_fixed_40_70');
+    const wl = JSON.parse(JSON.stringify(CL));
+    Object.assign(wl,{height:360, hovermode:'closest',
+      xaxis:Object.assign(wl.xaxis,{tickformat:undefined,type:'log',title:{text:'zone flips per year (turnover, log scale) — fewer is cheaper to follow',font:{size:11.5}}}),
+      yaxis:Object.assign(wl.yaxis,{title:{text:'3m spread pessimism − optimism, pp (post-2015)',font:{size:11.5}},zeroline:true,zerolinecolor:'#c0beb5'}),
+      shapes:[{type:'line',xref:'paper',x0:0,x1:1,yref:'y',y0:base.spread3m_test,y1:base.spread3m_test,line:{color:'#8a8a82',width:1,dash:'dot'}}],
+      annotations:[
+        {xref:'paper',x:0.99,y:base.spread3m_test,yref:'y',text:'baseline (raw, 45/65)',showarrow:false,xanchor:'right',yshift:10,font:{size:10.5,color:'#8a8a82'}},
+        {x:Math.log10(adopted.flips_yr), y:adopted.spread3m_test, xref:'x', yref:'y', text:'adopted: 5d, 40/70', showarrow:true, arrowhead:2, arrowcolor:'#1a1a18', ax:34, ay:-30, font:{size:11.5,color:'#1a1a18'}}
+      ]});
+    try { Plotly.newPlot('chart-why', traces2, wl, {displayModeBar:false, responsive:true}); }
+    catch(e) { console.warn('why chart unavailable', e); }
+  })();
 
   document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(x=>{x.classList.remove('active');x.setAttribute('aria-selected','false');});
