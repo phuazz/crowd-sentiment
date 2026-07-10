@@ -340,7 +340,7 @@ function boot(D){
     yaxis:Object.assign(lay.yaxis,{type:'log',domain:[0.55,1],nticks:7}),
     yaxis2:{domain:[0,0.48],range:[0,100],side:'right',gridcolor:'#f0f0ea',linecolor:'#d5d3ca',tickfont:{size:11,family:'JetBrains Mono'},dtick:20,automargin:true},
     annotations:[
-      {x:1,y:c.sig,xref:'paper',yref:'y2',text:' '+fmt(c.sig,1)+' ',showarrow:false,xanchor:'right',xshift:-6,font:{size:11.5,family:'JetBrains Mono',color:'#fff'},bgcolor:c.zone_sig==='pessimism'?'#1a8754':(c.zone_sig==='optimism'?'#c0392b':'#8a8a82'),borderpad:3},
+      {x:S.dates[S.dates.length-1],y:c.sig,xref:'x',yref:'y2',text:' '+fmt(c.sig,1)+' ',showarrow:false,xanchor:'left',xshift:7,font:{size:11.5,family:'JetBrains Mono',color:'#fff'},bgcolor:c.zone_sig==='pessimism'?'#1a8754':(c.zone_sig==='optimism'?'#c0392b':'#8a8a82'),borderpad:3},
       {x:0.005,y:96,xref:'paper',yref:'y2',text:'excessive optimism > 70',showarrow:false,xanchor:'left',font:{size:11.5,color:'#c0392b'}},
       {x:0.005,y:7,xref:'paper',yref:'y2',text:'extreme pessimism < 40',showarrow:false,xanchor:'left',font:{size:11.5,color:'#1a8754'}}
     ]
@@ -361,13 +361,15 @@ function boot(D){
   const setRange = y => {
     try {
       const end = S.dates[S.dates.length-1];
-      if (y==='all'){
-        Plotly.relayout('chart-main', {'xaxis.autorange':true, 'yaxis.range': yFit(S.dates[0], end)});
-        return;
-      }
-      const d = new Date(end); d.setFullYear(d.getFullYear()-Number(y));
-      const x0 = d.toISOString().slice(0,10);
-      Plotly.relayout('chart-main', {'xaxis.range':[x0, end], 'yaxis.range': yFit(x0, end)});
+      // pad the right edge ~4.5% of the window so the NOW pill sits in
+      // empty space beside the line end instead of covering it
+      const pad = x0 => {
+        const e = new Date(end).getTime();
+        return new Date(e + (e - new Date(x0).getTime()) * 0.045).toISOString().slice(0,10);
+      };
+      const x0 = y==='all' ? S.dates[0]
+        : (() => { const d = new Date(end); d.setFullYear(d.getFullYear()-Number(y)); return d.toISOString().slice(0,10); })();
+      Plotly.relayout('chart-main', {'xaxis.range':[x0, pad(x0)], 'yaxis.range': yFit(x0, end)});
     } catch(e) {}
   };
   const applyChartH = () => {
