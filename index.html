@@ -501,13 +501,19 @@ function boot(D){
       ${znumHtml(g('1m').mean,g('3m').mean,g('6m').mean,g('3m').hit)}</div>`;
   };
   let pessThrustCard = '';
-  if (D.pess_thrust) {
-    const w = D.pess_thrust.with, wo = D.pess_thrust.without;
+  if (D.thrust_explain && D.thrust_explain.after) {
+    const a = D.thrust_explain.after;
     const cur = c.zone_sig==='pessimism' && c.thrust;
+    // fire-timed durable-bottom record (the evidence for 120%), 3m/6m/12m + 12m hit
     pessThrustCard = `<div class="zcard ${cur?'cur':''}" style="border-left:3px solid var(--g)">
-      <div class="zhead"><h4>${zoneChip('pessimism')} + thrust confirmed</h4><span class="zrange">strongest buy${cur?' <span class="curtag">NOW</span>':''}</span></div>
-      ${znumHtml(w.m1m,w.m3m,w.m6m,w.hit3m)}
-      <div class="note" style="margin-top:8px">Fear confirmed by a breadth thrust &mdash; the tilt goes to <b>120%</b> here. Smoothed reads soften at 3m (late to the bounce); the durable-bottom record is on <b>Conditions &amp; thrust</b>.</div></div>`;
+      <div class="zhead"><h4>${zoneChip('pessimism')} + thrust confirmed</h4><span class="zrange">durable bottom${cur?' <span class="curtag">NOW</span>':''}</span></div>
+      <div class="znums">
+        <div class="znum"><div class="v ${numcls(a['3m'].mean)}">${num(a['3m'].mean)}</div><div class="l">3m fwd</div></div>
+        <div class="znum"><div class="v ${numcls(a['6m'].mean)}">${num(a['6m'].mean)}</div><div class="l">6m fwd</div></div>
+        <div class="znum"><div class="v ${numcls(a['12m'].mean)}">${num(a['12m'].mean)}</div><div class="l">12m fwd</div></div>
+        <div class="znum"><div class="v pos">${a['12m'].hit}%</div><div class="l">12m hit</div></div>
+      </div>
+      <div class="note" style="margin-top:8px">Measured <b>from the thrust fire</b> (the turn), ${D.thrust_explain.n_fires} since 1995. This is why the tilt goes to <b>120%</b> — a durable turn worth <b>holding</b> (96% positive at 12m), not a quick bounce. A lone fear reading gives a bigger <i>1–3m</i> pop but risks levering into fear that keeps falling, so it takes a lighter 110%.</div></div>`;
   }
   document.getElementById('zone-strip').innerHTML =
     zoneCard('pessimism','Extreme pessimism','&lt; 40') + pessThrustCard +
