@@ -210,7 +210,8 @@ ul.caveats li { margin-bottom:7px; }
   <div class="panel" id="p-value">
     <div class="card">
       <div class="card-head"><h3>Forward S&amp;P 500 returns by sentiment zone — mean, %</h3><span class="note">day-level means; overlapping windows — see caveats</span></div>
-      <div class="card-body tight"><div id="chart-fwd" style="height:340px"></div></div>
+      <div class="card-body tight"><div id="chart-fwd" style="height:340px"></div>
+        <div class="note" style="padding:8px 8px 2px">Signal view = the composite smoothed over 5 trading days; a zone is pessimism below 40 or optimism above 70. Bars are day-level mean forward returns (overlapping windows).</div></div>
     </div>
     <div class="two-col">
       <div class="card"><div class="card-head"><h3>Full span (1995 →)</h3></div>
@@ -218,6 +219,9 @@ ul.caveats li { margin-bottom:7px; }
       <div class="card"><div class="card-head"><h3>Since 2016</h3></div>
         <div class="card-body tight"><table class="grid" id="tbl-fwd-2016"></table></div></div>
     </div>
+    <div class="card"><div class="card-head"><h3>Fear confirmed by a breadth thrust — measured from the fire</h3><span class="note">durable-bottom state · the 120% tier</span></div>
+      <div class="card-body tight"><table class="grid" id="tbl-fwd-thrust"></table>
+      <div class="note" id="fwd-thrust-note" style="padding:10px 8px 4px"></div></div></div>
     <div class="card"><div class="card-head"><h3>Annualised S&amp;P growth while in zone</h3></div>
       <div class="card-body tight"><table class="grid" id="tbl-gpa"></table></div></div>
     <div class="two-col">
@@ -552,6 +556,20 @@ function boot(D){
   };
   fwdTable(full, 'tbl-fwd-full');
   fwdTable(D.fwd.filter(r=>r.span==='since2016'), 'tbl-fwd-2016');
+
+  // fire-timed thrust panel — the durable-bottom state, a DIFFERENT basis from
+  // the day-level zone cuts above (measured from the fire, not while-in-zone)
+  (function(){
+    const te = D.thrust_explain; if(!te || !te.after || !te.base) return;
+    const HT = ['1m','3m','6m','12m'];
+    let th = '<tr><th>from the thrust fire</th>'+HT.map(x=>`<th>${x}</th>`).join('')+'</tr>';
+    th += '<tr><td>mean forward return</td>'+HT.map(h=>`<td class="pos">${fmt(te.after[h].mean)}%</td>`).join('')+'</tr>';
+    th += '<tr><td>positive</td>'+HT.map(h=>`<td>${te.after[h].hit}%</td>`).join('')+'</tr>';
+    th += '<tr><td>baseline (any day)</td>'+HT.map(h=>`<td>${fmt(te.base[h])}%</td>`).join('')+'</tr>';
+    document.getElementById('tbl-fwd-thrust').innerHTML = th;
+    document.getElementById('fwd-thrust-note').innerHTML =
+      `<b>Measured from the fire, not day-level in-zone.</b> ${te.n_fires} thrust fires since 1995 (10-day advances ÷ declines &gt; 1.9). This is the durable-bottom state the tilt reserves 120% for — the edge is the 6&ndash;12m hold (${fmt(te.after['12m'].mean)}% at 12m, ${te.after['12m'].hit}% positive, vs ${fmt(te.base['12m'])}% baseline). A day-level cut of the pessimism zone <b>understates</b> it at 1&ndash;3m because the 5-day smoothed view lags the initial snap — which is why it is shown here on its own fire-timed basis. See the <b>Conditions &amp; thrust</b> tab.`;
+  })();
 
   let g = '<tr><th>view</th><th>pessimism</th><th>neutral</th><th>optimism</th><th>buy/hold</th><th>% time pess</th><th>% time opt</th><th>flips/yr</th></tr>';
   D.gpa.forEach(r=>{
