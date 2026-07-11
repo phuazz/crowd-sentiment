@@ -536,14 +536,14 @@ function boot(D){
     document.getElementById('overlay-verdict').innerHTML =
       `<b style="color:var(--b)">This is the tilt in use.</b> Lean equity to 120% when the crowd is fearful, 90% when euphoric and money is tight, 100% otherwise. Over 1995&ndash;today it added about <b>${dCagr==null?'—':'+'+fmt(dCagr,1)+'%/yr'}</b> of return versus simply holding the index. <b>Read it honestly:</b> that extra return comes from being modestly more invested on average, not from timing — return-per-risk barely moved (${fmt(adc.sharpe,2)} vs ${fmt(bhc.sharpe,2)}), the worst drawdown was no smaller, and it lagged the index risk-adjusted over the last decade. So it is a <b>return-seeking contrarian overweight, not a risk reducer</b>.`;
     let sh = '<tr><th>Approach</th><th>Yearly return</th><th>Return per risk</th><th>Worst drop</th><th title="return during these three bear markets">2000-03</th><th>2008-09</th><th>2022</th></tr>';
-    const NM = {'BUY&HOLD':'Just hold the index','ADOPTED 120/100/90':'<b>Contrarian tilt in use (120/100/90)</b>','S-AxR1':'Alt: harder trim + bear brake','S-AxR0':'Alt: harder trim, no brake'};
+    const NM = {'BUY&HOLD':'Just hold the index','ADOPTED 120/100/90':'<b>Contrarian tilt in use (trim to 90% in euphoria)</b>','S-AxR0':'Also tested — deeper cut (to 80%)','S-AxR1':'Also tested — deeper cut, and adds less in downtrends'};
     D.overlay.cells.forEach(r=>{
       const hl = r.cell==='ADOPTED 120/100/90' ? ' class="hl"' : '';
       sh += `<tr${hl}><td>${NM[r.cell]||r.cell}</td><td>${fmt(r.cagr)}%</td><td>${fmt(r.sharpe,2)}</td><td class="neg">${fmt(r.maxdd,1)}%</td><td class="neg">${fmt(r['bear 2000-09 to 2003-03'],1)}%</td><td class="neg">${fmt(r['bear 2007-10 to 2009-03'],1)}%</td><td class="neg">${fmt(r['bear 2022'],1)}%</td></tr>`;
     });
     document.getElementById('tbl-overlay').innerHTML = sh;
     document.getElementById('overlay-note').innerHTML =
-      `"Return per risk" is the Sharpe ratio (higher is better); "worst drop" is the deepest peak-to-trough fall; the last three columns are returns through the named bear markets. The tilt is bounded (±20 points of equity) and never goes short. A rigid weekly version of this tilt did <b>not</b> clear our pre-registered risk-adjusted bar — see the Method tab; it is used as a return-seeking overweight on contrarian conviction, sized small.`;
+      `<b>Trim</b> = how far equity is cut when the crowd is euphoric (the tilt in use cuts lightly to 90%; the "also tested" rows cut harder to 80%). <b>Adds less in downtrends</b> = when the market is below its long-term (200-day) trend, lean in only half as hard, to avoid buying aggressively into a falling market. Neither harder version helped — all four cluster near the same return-per-risk. "Return per risk" is the Sharpe ratio (higher is better); "worst drop" is the deepest peak-to-trough fall; the last three columns are returns through the named bear markets. The tilt is bounded (±20 points of equity) and never goes short; the rigid weekly version did <b>not</b> clear our pre-registered risk-adjusted bar (Method tab).`;
   }
 
   let rh = '<tr><th>date</th><th>raw</th><th>5d</th><th>zone</th><th>thrust</th></tr>';
