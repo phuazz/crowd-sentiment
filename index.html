@@ -32,6 +32,10 @@
   --p: #7c3aed;  --p-bg: rgba(124,58,237,0.06);
   --c: #0891b2;  --c-bg: rgba(8,145,178,0.06);
   --pk: #be185d; --pk-bg: rgba(190,24,93,0.06);
+  /* -text variants per C:\dev\design.md — for TEXT; the values above are for
+     fills, borders and large type. At 11px the base colours fail WCAG AA. */
+  --g-text:#146c43; --r-text:#a93226; --b-text:#1d4ed8; --a-text:#92400e;
+  --p-text:#7c3aed; --c-text:#0e7490; --pk-text:#be185d; --t3-text:#66665e;
   /* type */
   --serif: 'Instrument Serif', Georgia, serif;
   --sans: 'DM Sans', -apple-system, sans-serif;
@@ -51,24 +55,24 @@ body { background:var(--bg); color:var(--t1); font-family:var(--sans); line-heig
 .masthead { padding:28px 0 22px; border-bottom:2px solid var(--t1); display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; }
 .masthead-left h1 { font-family:var(--serif); font-size:32px; font-weight:400; letter-spacing:-0.5px; }
 .masthead-left h1 em { font-style:italic; color:var(--t3); }
-.masthead-left .sub { color:var(--t3); font-size:12px; margin-top:4px; }
+.masthead-left .sub { color:var(--t3-text); font-size:12px; margin-top:4px; }
 .pills { display:flex; gap:8px; flex-wrap:wrap; }
 .pill { font-size:11px; font-weight:600; letter-spacing:0.5px; padding:5px 12px; border-radius:99px; border:1px solid var(--bd2); background:var(--bg3); color:var(--t2); font-family:var(--mono); }
-.pill.edu { background:var(--b-bg); border-color:rgba(37,99,235,0.25); color:var(--b); }
-.pill.stale { background:var(--a-bg); border-color:rgba(180,83,9,0.3); color:var(--a); }
-.pill.zone-pessimism { background:var(--g-bg2); border-color:rgba(26,135,84,0.3); color:var(--g); }
+.pill.edu { background:var(--b-bg); border-color:rgba(37,99,235,0.25); color:var(--b-text); }
+.pill.stale { background:var(--a-bg); border-color:rgba(180,83,9,0.3); color:var(--a-text); }
+.pill.zone-pessimism { background:var(--g-bg2); border-color:rgba(26,135,84,0.3); color:var(--g-text); }
 .pill.zone-neutral { background:var(--bg3); }
-.pill.zone-optimism { background:var(--r-bg2); border-color:rgba(192,57,43,0.3); color:var(--r); }
+.pill.zone-optimism { background:var(--r-bg2); border-color:rgba(192,57,43,0.3); color:var(--r-text); }
 .kpi-strip { display:grid; grid-template-columns:repeat(6,1fr); gap:1px; background:var(--bd); border:1px solid var(--bd); border-radius:var(--radius-lg); overflow:hidden; margin:22px 0; }
 .kpi { background:var(--bg2); padding:14px 16px; }
-.kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:0.8px; font-weight:600; color:var(--t3); margin-bottom:4px; }
+.kpi-label { font-size:11px; text-transform:uppercase; letter-spacing:0.8px; font-weight:600; color:var(--t3-text); margin-bottom:4px; }
 .kpi-val { font-size:24px; font-weight:700; letter-spacing:-0.5px; font-family:var(--mono); }
-.kpi-val.pos { color:var(--g); } .kpi-val.neg { color:var(--r); } .kpi-val.neu { color:var(--t1); }
-.kpi-sub { font-size:11px; color:var(--t3); margin-top:2px; }
+.kpi-val.pos { color:var(--g-text); } .kpi-val.neg { color:var(--r-text); } .kpi-val.neu { color:var(--t1); }
+.kpi-sub { font-size:11px; color:var(--t3-text); margin-top:2px; }
 .gaugebar { height:7px; border-radius:4px; margin-top:8px; position:relative; background:linear-gradient(90deg, rgba(26,135,84,0.30) 0 40%, var(--bg4) 40% 70%, rgba(192,57,43,0.30) 70% 100%); }
 .gaugebar .mk { position:absolute; top:-2px; transform:translateX(-50%); width:3px; height:11px; border-radius:1px; background:var(--t1); box-shadow:0 0 0 1.5px var(--bg2); }
 .tabs { display:flex; gap:22px; border-bottom:1px solid var(--bd); margin-bottom:20px; overflow-x:auto; }
-.tab { position:relative; padding:10px 2px; min-height:44px; font-size:13px; font-weight:600; color:var(--t3); cursor:pointer; background:none; border:none; font-family:var(--sans); white-space:nowrap; }
+.tab { position:relative; padding:10px 2px; min-height:44px; font-size:13px; font-weight:600; color:var(--t3-text); cursor:pointer; background:none; border:none; font-family:var(--sans); white-space:nowrap; }
 .tab.active { color:var(--t1); }
 .tab.active::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:2px; background:var(--t1); }
 .panel { display:none; } .panel.active { display:block; }
@@ -77,29 +81,29 @@ body { background:var(--bg); color:var(--t1); font-family:var(--sans); line-heig
 .card-head h3 { font-size:12px; text-transform:uppercase; letter-spacing:0.8px; color:var(--t2); font-weight:700; }
 .card-body { padding:16px 18px; }
 .card-body.tight { padding:8px 10px; overflow-x:auto; }
-.note { font-size:12px; color:var(--t3); }
+.note { font-size:12px; color:var(--t3-text); }
 .note b { color:var(--t2); }
 .rangebtns { display:flex; gap:6px; }
 .rangebtns button { font-family:var(--mono); font-size:11px; padding:4px 10px; border:1px solid var(--bd2); background:var(--bg3); color:var(--t2); border-radius:6px; cursor:pointer; }
 .rangebtns button.on { background:var(--t1); color:#fff; border-color:var(--t1); }
 table.grid { width:100%; border-collapse:collapse; font-size:12.5px; }
-table.grid th { position:sticky; top:0; background:var(--bg3); text-transform:uppercase; font-size:10.5px; letter-spacing:0.6px; color:var(--t3); padding:8px 10px; border-bottom:2px solid var(--bd2); text-align:right; }
+table.grid th { position:sticky; top:0; background:var(--bg3); text-transform:uppercase; font-size:10.5px; letter-spacing:0.6px; color:var(--t3-text); padding:8px 10px; border-bottom:2px solid var(--bd2); text-align:right; }
 table.grid th:first-child, table.grid td:first-child { text-align:left; }
 table.grid td { padding:7px 10px; border-bottom:1px solid var(--bd); font-family:var(--mono); text-align:right; }
 table.grid td:first-child { font-family:var(--sans); }
 table.grid tr:hover td { background:var(--bg-hover); }
-td.pos, span.pos { color:var(--g); } td.neg, span.neg { color:var(--r); }
+td.pos, span.pos { color:var(--g-text); } td.neg, span.neg { color:var(--r-text); }
 tr.hl td { background:var(--b-bg); }
 .chip { display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:0.4px; padding:2px 9px; border-radius:99px; }
-.chip.pessimism { background:var(--g-bg2); color:var(--g); }
+.chip.pessimism { background:var(--g-bg2); color:var(--g-text); }
 .chip.neutral { background:var(--bg4); color:var(--t2); }
-.chip.optimism { background:var(--r-bg2); color:var(--r); }
-.chip.survey { background:var(--b-bg); color:var(--b); }
-.chip.positioning { background:var(--c-bg); color:var(--c); }
-.chip.options { background:var(--p-bg); color:var(--p); }
-.chip.breadth { background:var(--g-bg); color:var(--g); }
+.chip.optimism { background:var(--r-bg2); color:var(--r-text); }
+.chip.survey { background:var(--b-bg); color:var(--b-text); }
+.chip.positioning { background:var(--c-bg); color:var(--c-text); }
+.chip.options { background:var(--p-bg); color:var(--p-text); }
+.chip.breadth { background:var(--g-bg); color:var(--g-text); }
 .chip.flows { background:var(--pk-bg); color:var(--pk); }
-.chip.volatility { background:var(--a-bg); color:var(--a); }
+.chip.volatility { background:var(--a-bg); color:var(--a-text); }
 .chip.valuation { background:var(--bg4); color:var(--t2); }
 .two-col { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:18px; }
 .zone-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
@@ -108,44 +112,44 @@ tr.hl td { background:var(--b-bg); }
 .zcard.cur { border:2px solid var(--t1); box-shadow:var(--shadow-md); }
 .zcard .zhead { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
 .zcard .zhead h4 { font-size:13.5px; }
-.zcard .zrange { font-family:var(--mono); font-size:11px; color:var(--t3); }
+.zcard .zrange { font-family:var(--mono); font-size:11px; color:var(--t3-text); }
 .zcard .znums { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
 .zcard .znum { text-align:center; }
 .zcard .znum .v { font-family:var(--mono); font-size:15px; font-weight:700; }
-.zcard .znum .l { font-size:10px; text-transform:uppercase; letter-spacing:0.6px; color:var(--t3); }
+.zcard .znum .l { font-size:10px; text-transform:uppercase; letter-spacing:0.6px; color:var(--t3-text); }
 .zcard .curtag { font-size:10px; font-weight:700; letter-spacing:0.6px; padding:2px 8px; border-radius:99px; background:var(--t1); color:#fff; }
 .comp-hist { padding:16px 18px 6px; border-top:1px solid var(--bd); }
 .comp-hist:first-of-type { border-top:none; }
 .comp-hist .chead { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
 .comp-hist .chead h4 { font-size:14px; }
 .comp-hist .cdesc { font-size:12.5px; color:var(--t2); margin:4px 0 2px; max-width:980px; }
-.comp-hist .csrc { font-size:11px; color:var(--t3); margin-bottom:4px; }
+.comp-hist .csrc { font-size:11px; color:var(--t3-text); margin-bottom:4px; }
 @media (max-width:768px){ .zone-strip{grid-template-columns:1fr;} .zcard .znums{grid-template-columns:repeat(4,1fr);} }
 .trigger { border:1px solid var(--bd); border-radius:var(--radius); padding:14px 16px; background:var(--bg2); }
 .trigger h4 { font-size:13px; margin-bottom:6px; }
 .trigger .big { font-family:var(--mono); font-size:22px; font-weight:700; }
 .trigger .plain { font-size:13px; color:var(--t1); margin:6px 0 10px; line-height:1.5; }
 .verdict { border-radius:var(--radius); padding:12px 16px; margin-bottom:14px; font-size:14px; line-height:1.5; border-left:4px solid var(--r); background:var(--r-bg); }
-.verdict b { color:var(--r); }
+.verdict b { color:var(--r-text); }
 table.mini { width:100%; border-collapse:collapse; font-size:13px; margin:4px 0 8px; }
-table.mini th { text-align:right; padding:5px 10px; font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--t3); border-bottom:1px solid var(--bd2); }
+table.mini th { text-align:right; padding:5px 10px; font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--t3-text); border-bottom:1px solid var(--bd2); }
 table.mini th:first-child { text-align:left; }
 table.mini td { text-align:right; padding:5px 10px; font-family:var(--mono); border-bottom:1px solid var(--bd); }
 table.mini td:first-child { text-align:left; font-family:var(--sans); }
 table.mini tr.hl td { background:var(--g-bg); font-weight:700; }
 .tag { font-size:10px; font-weight:700; letter-spacing:0.3px; padding:1px 7px; border-radius:9px; background:var(--bg4); color:var(--t2); margin-left:6px; }
-.tag.hi { background:var(--g-bg2); color:var(--g); }
+.tag.hi { background:var(--g-bg2); color:var(--g-text); }
 .stance { display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid var(--bd); border-radius:var(--radius-lg); background:var(--bg2); box-shadow:var(--shadow-sm); padding:14px 18px; margin:0 0 4px; border-left:4px solid var(--t3); }
 .stance.over { border-left-color:var(--g); } .stance.under { border-left-color:var(--r); } .stance.flat { border-left-color:var(--t3); }
 .stance .w { font-family:var(--mono); font-size:30px; font-weight:800; letter-spacing:-1px; }
-.stance.over .w { color:var(--g); } .stance.under .w { color:var(--r); } .stance.flat .w { color:var(--t1); }
-.stance .lbl { font-size:11px; text-transform:uppercase; letter-spacing:0.7px; color:var(--t3); font-weight:700; }
+.stance.over .w { color:var(--g-text); } .stance.under .w { color:var(--r-text); } .stance.flat .w { color:var(--t1); }
+.stance .lbl { font-size:11px; text-transform:uppercase; letter-spacing:0.7px; color:var(--t3-text); font-weight:700; }
 .stance .why { font-size:13.5px; color:var(--t1); }
-.stance .rule { font-size:11.5px; color:var(--t3); font-family:var(--mono); margin-top:2px; }
+.stance .rule { font-size:11.5px; color:var(--t3-text); font-family:var(--mono); margin-top:2px; }
 ul.caveats { padding-left:18px; font-size:13px; color:var(--t2); }
 ul.caveats li { margin-bottom:7px; }
 .methodology p { font-size:13px; color:var(--t2); margin-bottom:10px; max-width:900px; }
-.footer { margin-top:30px; padding-top:14px; border-top:1px solid var(--bd); font-size:11px; color:var(--t3); }
+.footer { margin-top:30px; padding-top:14px; border-top:1px solid var(--bd); font-size:11px; color:var(--t3-text); }
 @media (max-width:1200px){ .kpi-strip{grid-template-columns:repeat(3,1fr);} }
 @media (max-width:768px){ .shell{padding:12px 14px 40px;} .kpi-strip{grid-template-columns:repeat(2,1fr);} .two-col{grid-template-columns:1fr;} }
 </style>
@@ -242,7 +246,7 @@ ul.caveats li { margin-bottom:7px; }
         <div class="verdict" id="overlay-verdict"></div></div>
       <div class="card-body tight" style="padding-top:0">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:2px 2px 6px">
-          <div class="note"><b>Growth of $100</b> — the tilt vs holding the index, <b>rebased to the start of the window</b> (log scale). <span style="color:var(--g)">Green</span> = tilt overweight (≥110%, fear); <span style="color:var(--r)">red</span> = underweight (90%, gated euphoria); unshaded = neutral 100%.</div>
+          <div class="note"><b>Growth of $100</b> — the tilt vs holding the index, <b>rebased to the start of the window</b> (log scale). <span style="color:var(--g-text)">Green</span> = tilt overweight (≥110%, fear); <span style="color:var(--r-text)">red</span> = underweight (90%, gated euphoria); unshaded = neutral 100%.</div>
           <div class="rangebtns" id="eqrange"></div>
         </div>
         <div id="chart-equity" style="height:300px"></div>
@@ -384,7 +388,7 @@ function boot(D){
   const wowSig = (()=>{ const t=D.series.sig.filter(x=>x!=null); return t.length>6 ? c.sig - t[t.length-6] : null; })();
   const arrow = d => d==null?'':(d>0.3?' <span class="pos">▲</span>':(d<-0.3?' <span class="neg">▼</span>':' ·'));
   document.getElementById('kpis').innerHTML = `
-    <div class="kpi kpi-wide"><div class="kpi-label">Composite (5d) — crowd sentiment</div><div class="kpi-val ${zcls(c.zone_sig)}">${fmt(c.sig,1)}${arrow(wowSig)}</div>${gauge(c.sig)}<div class="kpi-sub"><span style="color:var(--g)">buy &lt;40</span> · neutral · <span style="color:var(--r)">trim &gt;70</span> — now <b>${c.zone_sig}</b></div></div>
+    <div class="kpi kpi-wide"><div class="kpi-label">Composite (5d) — crowd sentiment</div><div class="kpi-val ${zcls(c.zone_sig)}">${fmt(c.sig,1)}${arrow(wowSig)}</div>${gauge(c.sig)}<div class="kpi-sub"><span style="color:var(--g-text)">buy &lt;40</span> · neutral · <span style="color:var(--r-text)">trim &gt;70</span> — now <b>${c.zone_sig}</b></div></div>
     <div class="kpi"><div class="kpi-label">Equity stance</div><div class="kpi-val ${c.tilt_weight>100?'pos':(c.tilt_weight<100?'neg':'neu')}">${c.tilt_weight==null?'—':c.tilt_weight+'%'}</div><div class="kpi-sub">contrarian tilt · net long</div></div>
     <div class="kpi"><div class="kpi-label">Breadth thrust</div><div class="kpi-val ${c.thrust?'pos':'neu'}">${c.thrust?'ON':'—'}</div><div class="kpi-sub">10d A/D ${fmt(c.thrust_ratio,2)} · last ${c.thrust_last_fired||'—'}</div></div>
     <div class="kpi"><div class="kpi-label">Financial conditions</div><div class="kpi-val ${c.fsi_z>0?'neg':'neu'}">${fmt(c.fsi_z,2)}</div><div class="kpi-sub">${fsiCap}</div></div>
@@ -398,12 +402,12 @@ function boot(D){
     document.getElementById('stance-banner').innerHTML =
       `<div class="stance ${cls}">
         <div><div class="lbl">Contrarian tilt — equity stance today</div>
-          <div class="w">${w}%<span style="font-size:14px;font-weight:600;color:var(--t3)"> net long</span></div></div>
+          <div class="w">${w}%<span style="font-size:14px;font-weight:600;color:var(--t3-text)"> net long</span></div></div>
         <div style="flex:1;min-width:220px">
           <div class="why">${c.tilt_reason||''}</div>
           <div class="rule">rule: fear + thrust &rarr; 120% · fear alone &rarr; 110% · neutral &rarr; 100% · euphoria (tight) &rarr; 90% · never short</div>
         </div>
-        <div class="note" style="max-width:260px">A return-seeking overweight, not a risk reducer — <a href="#" id="stance-link" style="color:var(--b)">see how it tests &rarr;</a></div>
+        <div class="note" style="max-width:260px">A return-seeking overweight, not a risk reducer — <a href="#" id="stance-link" style="color:var(--b-text)">see how it tests &rarr;</a></div>
       </div>`;
     const sl = document.getElementById('stance-link');
     if (sl) sl.addEventListener('click', e=>{ e.preventDefault(); document.querySelector('[data-p="value"]').click();
@@ -607,7 +611,7 @@ function boot(D){
     document.getElementById('overlay-verdict').style.borderLeftColor = 'var(--b)';
     document.getElementById('overlay-verdict').style.background = 'var(--b-bg)';
     document.getElementById('overlay-verdict').innerHTML =
-      `<b style="color:var(--b)">This is the tilt in use.</b> Lean equity to <b>120% only when fear is confirmed by a breadth thrust</b> (the durable-bottom signal), <b>110% on fear alone</b>, 90% when euphoric and money is tight, 100% otherwise. Over 1995&ndash;today it added about <b>${dCagr==null?'—':'+'+fmt(dCagr,1)+'%/yr'}</b> of return versus holding the index, while <b>improving</b> the risk numbers over the plainer "fear&rarr;120%" version — better return-per-risk (${fmt(adc.sharpe,2)} vs ${fmt(bhc.sharpe,2)}), a shallower worst drop, and it kept pace with the index risk-adjusted over the last decade (where the plain version lagged). Saving the full overweight for thrust-confirmed bottoms avoids levering hard into fear that keeps falling. Still modest and return-seeking — <b>not a big risk reducer</b> — but a smarter-shaped tilt.`;
+      `<b style="color:var(--b-text)">This is the tilt in use.</b> Lean equity to <b>120% only when fear is confirmed by a breadth thrust</b> (the durable-bottom signal), <b>110% on fear alone</b>, 90% when euphoric and money is tight, 100% otherwise. Over 1995&ndash;today it added about <b>${dCagr==null?'—':'+'+fmt(dCagr,1)+'%/yr'}</b> of return versus holding the index, while <b>improving</b> the risk numbers over the plainer "fear&rarr;120%" version — better return-per-risk (${fmt(adc.sharpe,2)} vs ${fmt(bhc.sharpe,2)}), a shallower worst drop, and it kept pace with the index risk-adjusted over the last decade (where the plain version lagged). Saving the full overweight for thrust-confirmed bottoms avoids levering hard into fear that keeps falling. Still modest and return-seeking — <b>not a big risk reducer</b> — but a smarter-shaped tilt.`;
     let sh = '<tr><th>Approach</th><th>Yearly return</th><th>Return per risk</th><th>Worst drop</th><th title="return during these three bear markets">2000-03</th><th>2008-09</th><th>2022</th></tr>';
     const NM = {'BUY&HOLD':'Just hold the index','ADOPTED tiered 120/110/100/90':'<b>Contrarian tilt in use (120 thrust / 110 fear)</b>','S-AxR0':'Also tested — flat 120% + deeper cut (to 80%)','S-AxR1':'Also tested — deeper cut, adds less in downtrends'};
     D.overlay.cells.forEach(r=>{
@@ -633,8 +637,8 @@ function boot(D){
   let ch = '<tr><th>component</th><th>type</th><th>detail</th><th title="Effective date of the value in use — surveys/positioning enter at their public-release date, never earlier">as of</th><th>z-score</th><th>state</th></tr>';
   D.components.forEach(r=>{
     const staleOb = r.last_obs && ((new Date(c.as_of) - new Date(r.last_obs))/864e5 > 10);
-    const q = r.queued ? `<div style="font-size:10.5px;color:var(--c)">next ${r.queued}</div>` : '';
-    ch += `<tr data-cid="${r.id}" style="cursor:pointer"><td><b>${r.name}</b></td><td><span class="chip ${r.cat}">${r.cat}</span></td><td style="font-family:var(--sans);color:var(--t3)">${r.detail}</td><td${staleOb?' style="color:var(--a);font-weight:700"':''}>${r.last_obs||'—'}${q}</td><td>${fmt(r.z)}</td><td>${r.state?zoneChip(r.state):'—'}</td></tr>`;
+    const q = r.queued ? `<div style="font-size:10.5px;color:var(--c-text)">next ${r.queued}</div>` : '';
+    ch += `<tr data-cid="${r.id}" style="cursor:pointer"><td><b>${r.name}</b></td><td><span class="chip ${r.cat}">${r.cat}</span></td><td style="font-family:var(--sans);color:var(--t3-text)">${r.detail}</td><td${staleOb?' style="color:var(--a-text);font-weight:700"':''}>${r.last_obs||'—'}${q}</td><td>${fmt(r.z)}</td><td>${r.state?zoneChip(r.state):'—'}</td></tr>`;
   });
   document.getElementById('tbl-comps').innerHTML = ch;
   document.querySelectorAll('#tbl-comps tr[data-cid]').forEach(tr=>tr.addEventListener('click',()=>{
