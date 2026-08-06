@@ -865,18 +865,29 @@ function boot(D){
   }
 
   function wfSvg(w){
-    var bars = w.steps.length + 2, BW = 64, GAP = 20, L = 46, R = 18;
-    var TOP = 26, PLOT = 236, BOT = 66, H = TOP + PLOT + BOT;
-    var SLOT = BW + GAP, BUDGET = 14, LINES = 3;
-    var W = L + bars * SLOT + R;
+    var bars = w.steps.length + 2, L = 52, R = 20;
+    var TOP = 30, PLOT = 262, BOT = 78, H = TOP + PLOT + BOT;
+    // Adaptive geometry. A fixed slot width left a third of a wide card empty
+    // on a 9-crossing walk and 42% empty on a 3-crossing one, because the chart
+    // sat at its intrinsic size instead of filling the space. Size the slots to
+    // the card so it fills at ANY step count. The floor of 92 is where labels
+    // start to collide, so a long walk overflows and scrolls rather than
+    // shrinking type below legibility; the ceiling stops 3 bars sprawling.
+    var host = document.getElementById('wf-chart');
+    var avail = Math.max(320, (host && host.clientWidth) || 900);
+    var TARGET = Math.min(avail, 1240);
+    var SLOT = Math.max(92, Math.min(210, (TARGET - L - R) / bars));
+    var BW = Math.round(SLOT * 0.62);
+    var BUDGET = Math.max(14, Math.floor(SLOT / 6.1)), LINES = 3;
+    var W = Math.round(L + bars * SLOT + R);
     var lvls = [w.start], run = w.start;
     w.steps.forEach(function(s){ run += s.pts; lvls.push(run); });
     var lo = Math.min.apply(null, lvls), hi = Math.max.apply(null, lvls);
     var pad = Math.max(4, (hi - lo) * 0.18);
     lo = Math.max(0, lo - pad); hi = Math.min(100, hi + pad);
     var y = function(v){ return TOP + (hi - v) / (hi - lo || 1) * PLOT; };
-    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H +
-            '" role="img" aria-label="Waterfall of the composite move, ' + w.d0 + ' to ' + w.d1 +
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;min-width:' +
+            W + 'px;max-width:' + Math.round(W * 1.45) + 'px" preserveAspectRatio="xMinYMid meet" role="img" aria-label="Waterfall of the composite move, ' + w.d0 + ' to ' + w.d1 +
             ', decomposed into ' + w.steps.length + ' bracket crossings.">';
     // round tick values rather than quarters of an arbitrary span
     var span = hi - lo;
@@ -884,21 +895,21 @@ function boot(D){
     for (var v = Math.ceil(lo / step) * step; v <= hi; v += step){
       s += '<line x1="' + L + '" y1="' + y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + y(v).toFixed(1) +
            '" stroke="var(--bd)"/><text x="' + (L - 7) + '" y="' + (y(v) + 3.5).toFixed(1) +
-           '" text-anchor="end" font-size="10" fill="var(--t3-text)" font-family="var(--mono)">' + v + '</text>';
+           '" text-anchor="end" font-size="11" fill="var(--t3-text)" font-family="var(--mono)">' + v + '</text>';
     }
     // zone lines, labelled at the LEFT so they cannot collide with the end bar
     [[40, 'var(--g)', 'buy 40'], [70, 'var(--r)', 'trim 70']].forEach(function(zn){
       if (zn[0] <= lo || zn[0] >= hi) return;
       s += '<line x1="' + L + '" y1="' + y(zn[0]).toFixed(1) + '" x2="' + (W - R) + '" y2="' + y(zn[0]).toFixed(1) +
            '" stroke="' + zn[1] + '" stroke-dasharray="4 4" opacity="0.7"/>' +
-           '<text x="' + (L + 5) + '" y="' + (y(zn[0]) - 4).toFixed(1) + '" font-size="9.5" fill="' +
+           '<text x="' + (L + 5) + '" y="' + (y(zn[0]) - 4).toFixed(1) + '" font-size="11" fill="' +
            zn[1] + '" font-family="var(--mono)">' + zn[2] + '</text>';
     });
     var x = function(i){ return L + i * SLOT; };
     var lbl = function(i, text){
       var cx = x(i) + BW / 2;
       return wfWrap(text, BUDGET, LINES).map(function(ln, k){
-        return '<text x="' + cx + '" y="' + (TOP + PLOT + 20 + k * 11) + '" text-anchor="middle" font-size="9" fill="var(--t2)">' +
+        return '<text x="' + cx + '" y="' + (TOP + PLOT + 24 + k * 13) + '" text-anchor="middle" font-size="11" fill="var(--t2)">' +
                ln.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</text>';
       }).join('');
     };
@@ -906,7 +917,7 @@ function boot(D){
     s += '<rect x="' + x(0) + '" y="' + y(w.start).toFixed(1) + '" width="' + BW + '" height="' +
          (base - y(w.start)).toFixed(1) + '" fill="var(--b)" opacity="0.16" rx="2"/>' +
          '<text x="' + (x(0) + BW / 2) + '" y="' + (y(w.start) - 6).toFixed(1) +
-         '" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--b-text)" font-family="var(--mono)">' +
+         '" text-anchor="middle" font-size="14" font-weight="700" fill="var(--b-text)" font-family="var(--mono)">' +
          w.start.toFixed(1) + '</text>' + lbl(0, w.d0.slice(5));
     run = w.start;
     w.steps.forEach(function(st, k){
@@ -919,7 +930,7 @@ function boot(D){
            '" fill="' + fill + '" rx="2"><title>' + esc + ': ' + WF_LAB[st.from] + ' → ' + WF_LAB[st.to] +
            '  (' + (st.pts > 0 ? '+' : '') + st.pts.toFixed(2) + ' pts, z ' +
            (st.z0 == null ? '—' : st.z0.toFixed(2)) + ' → ' + (st.z1 == null ? '—' : st.z1.toFixed(2)) + ')</title></rect>' +
-           '<text x="' + (x(i) + BW / 2) + '" y="' + (top - 6).toFixed(1) + '" text-anchor="middle" font-size="10.5" font-weight="700" fill="' +
+           '<text x="' + (x(i) + BW / 2) + '" y="' + (top - 6).toFixed(1) + '" text-anchor="middle" font-size="12.5" font-weight="700" fill="' +
            (up ? 'var(--g-text)' : 'var(--r-text)') + '" font-family="var(--mono)">' +
            (up ? '+' : '−') + Math.abs(st.pts).toFixed(1) + '</text>' +
            '<line x1="' + (x(i) + BW) + '" y1="' + y1.toFixed(1) + '" x2="' + x(i + 1) + '" y2="' + y1.toFixed(1) +
@@ -930,7 +941,7 @@ function boot(D){
     s += '<rect x="' + x(ie) + '" y="' + y(w.end).toFixed(1) + '" width="' + BW + '" height="' +
          (base - y(w.end)).toFixed(1) + '" fill="var(--b)" opacity="0.16" rx="2"/>' +
          '<text x="' + (x(ie) + BW / 2) + '" y="' + (y(w.end) - 6).toFixed(1) +
-         '" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--b-text)" font-family="var(--mono)">' +
+         '" text-anchor="middle" font-size="14" font-weight="700" fill="var(--b-text)" font-family="var(--mono)">' +
          w.end.toFixed(1) + '</text>' + lbl(ie, w.d1.slice(5));
     return s + '</svg>';
   }
