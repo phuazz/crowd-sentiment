@@ -833,76 +833,105 @@ function boot(D){
              liveA: liveA, liveB: liveB, unit: unit, rebased: rebased, back: back };
   }
 
+  // Greedy wrap on a CHARACTER BUDGET derived from the slot width. The first
+  // version split after two words regardless of their length, so
+  // "S&P1500 advancing-volume" rendered 125px wide into a 69px slot and 8 of 15
+  // labels collided. The full name is always in the bar tooltip, so clipping
+  // the tail of an over-long line is safe.
+  function wfWrap(t, budget, maxLines){
+    var lines = [], line = '', words = [];
+    // a long unbroken token like "bulls/(bulls+bears)" cannot wrap on spaces
+    // alone and got clipped, so allow a break after a slash too
+    String(t).split(/\s+/).forEach(function(w){
+      if (w.length <= budget){ words.push(w); return; }
+      var parts = w.split('/');
+      parts.forEach(function(pt, k){
+        var piece = (k < parts.length - 1) ? pt + '/' : pt;
+        if (piece) words.push(piece);
+      });
+    });
+    words.forEach(function(w){
+      if (!line){ line = w; return; }
+      var joiner = /\/$/.test(line) ? '' : ' ';
+      if ((line.length + joiner.length + w.length) <= budget){ line += joiner + w; }
+      else { lines.push(line); line = w; }
+    });
+    if (line) lines.push(line);
+    if (lines.length > maxLines){
+      lines = lines.slice(0, maxLines);
+      lines[maxLines - 1] = lines[maxLines - 1].replace(/\s+\S*$/, '') + '…';
+    }
+    return lines.map(function(l){ return l.length > budget + 3 ? l.slice(0, budget + 2) + '…' : l; });
+  }
+
   function wfSvg(w){
-    var bars = w.steps.length + 2, BW = 58, GAP = 11, L = 44, R = 16, H = 300, TOP = 26, BOT = 56;
-    var W = L + bars * (BW + GAP) + R;
-    // running path, so the axis covers every intermediate level the walk touches
+    var bars = w.steps.length + 2, BW = 64, GAP = 20, L = 46, R = 18;
+    var TOP = 26, PLOT = 236, BOT = 66, H = TOP + PLOT + BOT;
+    var SLOT = BW + GAP, BUDGET = 14, LINES = 3;
+    var W = L + bars * SLOT + R;
     var lvls = [w.start], run = w.start;
     w.steps.forEach(function(s){ run += s.pts; lvls.push(run); });
     var lo = Math.min.apply(null, lvls), hi = Math.max.apply(null, lvls);
     var pad = Math.max(4, (hi - lo) * 0.18);
     lo = Math.max(0, lo - pad); hi = Math.min(100, hi + pad);
-    var y = function(v){ return TOP + (hi - v) / (hi - lo || 1) * (H - TOP - BOT); };
+    var y = function(v){ return TOP + (hi - v) / (hi - lo || 1) * PLOT; };
     var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H +
             '" role="img" aria-label="Waterfall of the composite move, ' + w.d0 + ' to ' + w.d1 +
             ', decomposed into ' + w.steps.length + ' bracket crossings.">';
-    // gridlines
-    var ticks = 4;
-    for (var t = 0; t <= ticks; t++){
-      var v = lo + (hi - lo) * t / ticks;
+    // round tick values rather than quarters of an arbitrary span
+    var span = hi - lo;
+    var step = [2, 5, 10, 20, 25, 50].filter(function(v){ return span / v <= 5; })[0] || 50;
+    for (var v = Math.ceil(lo / step) * step; v <= hi; v += step){
       s += '<line x1="' + L + '" y1="' + y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + y(v).toFixed(1) +
            '" stroke="var(--bd)"/><text x="' + (L - 7) + '" y="' + (y(v) + 3.5).toFixed(1) +
-           '" text-anchor="end" font-size="10" fill="var(--t3-text)" font-family="var(--mono)">' + v.toFixed(0) + '</text>';
+           '" text-anchor="end" font-size="10" fill="var(--t3-text)" font-family="var(--mono)">' + v + '</text>';
     }
-    // zone lines where visible
+    // zone lines, labelled at the LEFT so they cannot collide with the end bar
     [[40, 'var(--g)', 'buy 40'], [70, 'var(--r)', 'trim 70']].forEach(function(zn){
       if (zn[0] <= lo || zn[0] >= hi) return;
       s += '<line x1="' + L + '" y1="' + y(zn[0]).toFixed(1) + '" x2="' + (W - R) + '" y2="' + y(zn[0]).toFixed(1) +
            '" stroke="' + zn[1] + '" stroke-dasharray="4 4" opacity="0.7"/>' +
-           '<text x="' + (W - R - 2) + '" y="' + (y(zn[0]) - 5).toFixed(1) + '" text-anchor="end" font-size="10" fill="' +
+           '<text x="' + (L + 5) + '" y="' + (y(zn[0]) - 4).toFixed(1) + '" font-size="9.5" fill="' +
            zn[1] + '" font-family="var(--mono)">' + zn[2] + '</text>';
     });
-    var x = function(i){ return L + i * (BW + GAP); };
-    var lbl = function(i, l1, l2){
+    var x = function(i){ return L + i * SLOT; };
+    var lbl = function(i, text){
       var cx = x(i) + BW / 2;
-      return '<text x="' + cx + '" y="' + (H - 34) + '" text-anchor="middle" font-size="9.5" fill="var(--t2)">' + l1 + '</text>' +
-             (l2 ? '<text x="' + cx + '" y="' + (H - 23) + '" text-anchor="middle" font-size="9.5" fill="var(--t2)">' + l2 + '</text>' : '');
+      return wfWrap(text, BUDGET, LINES).map(function(ln, k){
+        return '<text x="' + cx + '" y="' + (TOP + PLOT + 20 + k * 11) + '" text-anchor="middle" font-size="9" fill="var(--t2)">' +
+               ln.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</text>';
+      }).join('');
     };
-    // start bar
     var base = y(lo);
     s += '<rect x="' + x(0) + '" y="' + y(w.start).toFixed(1) + '" width="' + BW + '" height="' +
-         (base - y(w.start)).toFixed(1) + '" fill="var(--b)" opacity="0.16" rx="2"/>';
-    s += '<text x="' + (x(0) + BW / 2) + '" y="' + (y(w.start) - 6).toFixed(1) +
+         (base - y(w.start)).toFixed(1) + '" fill="var(--b)" opacity="0.16" rx="2"/>' +
+         '<text x="' + (x(0) + BW / 2) + '" y="' + (y(w.start) - 6).toFixed(1) +
          '" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--b-text)" font-family="var(--mono)">' +
-         w.start.toFixed(1) + '</text>' + lbl(0, w.d0.slice(5), '');
-    // steps
+         w.start.toFixed(1) + '</text>' + lbl(0, w.d0.slice(5));
     run = w.start;
     w.steps.forEach(function(st, k){
       var i = k + 1, y0 = y(run), y1 = y(run + st.pts);
       var up = st.pts > 0, top = Math.min(y0, y1), h = Math.abs(y1 - y0);
       var full = Math.abs(st.to - st.from) === 2;
       var fill = up ? (full ? 'var(--g)' : 'var(--g2)') : (full ? 'var(--r)' : 'var(--r2)');
+      var esc = st.name.replace(/&/g, '&amp;').replace(/</g, '&lt;');
       s += '<rect x="' + x(i) + '" y="' + top.toFixed(1) + '" width="' + BW + '" height="' + Math.max(h, 2).toFixed(1) +
-           '" fill="' + fill + '" rx="2"><title>' + st.name + ': ' + WF_LAB[st.from] + ' → ' + WF_LAB[st.to] +
+           '" fill="' + fill + '" rx="2"><title>' + esc + ': ' + WF_LAB[st.from] + ' → ' + WF_LAB[st.to] +
            '  (' + (st.pts > 0 ? '+' : '') + st.pts.toFixed(2) + ' pts, z ' +
-           (st.z0 == null ? '—' : st.z0.toFixed(2)) + ' → ' + (st.z1 == null ? '—' : st.z1.toFixed(2)) + ')</title></rect>';
-      s += '<text x="' + (x(i) + BW / 2) + '" y="' + (top - 6).toFixed(1) + '" text-anchor="middle" font-size="10.5" font-weight="700" fill="' +
+           (st.z0 == null ? '—' : st.z0.toFixed(2)) + ' → ' + (st.z1 == null ? '—' : st.z1.toFixed(2)) + ')</title></rect>' +
+           '<text x="' + (x(i) + BW / 2) + '" y="' + (top - 6).toFixed(1) + '" text-anchor="middle" font-size="10.5" font-weight="700" fill="' +
            (up ? 'var(--g-text)' : 'var(--r-text)') + '" font-family="var(--mono)">' +
-           (up ? '+' : '−') + Math.abs(st.pts).toFixed(1) + '</text>';
-      // connector to the next bar
-      s += '<line x1="' + (x(i) + BW) + '" y1="' + y1.toFixed(1) + '" x2="' + x(i + 1) + '" y2="' + y1.toFixed(1) +
-           '" stroke="var(--bd-strong)" stroke-dasharray="2 2"/>';
-      var words = st.name.split(' ');
-      s += lbl(i, words.slice(0, 2).join(' '), words.slice(2).join(' '));
+           (up ? '+' : '−') + Math.abs(st.pts).toFixed(1) + '</text>' +
+           '<line x1="' + (x(i) + BW) + '" y1="' + y1.toFixed(1) + '" x2="' + x(i + 1) + '" y2="' + y1.toFixed(1) +
+           '" stroke="var(--bd-strong)" stroke-dasharray="2 2"/>' + lbl(i, st.name);
       run += st.pts;
     });
-    // end bar
     var ie = w.steps.length + 1;
     s += '<rect x="' + x(ie) + '" y="' + y(w.end).toFixed(1) + '" width="' + BW + '" height="' +
-         (base - y(w.end)).toFixed(1) + '" fill="var(--b)" opacity="0.16" rx="2"/>';
-    s += '<text x="' + (x(ie) + BW / 2) + '" y="' + (y(w.end) - 6).toFixed(1) +
+         (base - y(w.end)).toFixed(1) + '" fill="var(--b)" opacity="0.16" rx="2"/>' +
+         '<text x="' + (x(ie) + BW / 2) + '" y="' + (y(w.end) - 6).toFixed(1) +
          '" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--b-text)" font-family="var(--mono)">' +
-         w.end.toFixed(1) + '</text>' + lbl(ie, w.d1.slice(5), '');
+         w.end.toFixed(1) + '</text>' + lbl(ie, w.d1.slice(5));
     return s + '</svg>';
   }
 
