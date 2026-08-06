@@ -193,6 +193,19 @@ ul.caveats li { margin-bottom:7px; }
     </div>
     <div class="zone-strip" id="zone-strip"></div>
     <div class="note" style="margin:-8px 2px 16px">Mean forward S&amp;P 500 returns from days in each zone, 1995 → today (day-level means over overlapping windows — full tables, significance and caveats under <b>Signal value</b> and <b>Method &amp; caveats</b>).</div>
+    <div class="card">
+      <div class="card-head">
+        <h3>What moved the composite</h3>
+        <div class="rangebtns" id="wf-btns">
+          <button data-wf="1">1D</button><button data-wf="5" class="on">5D</button><button data-wf="21">21D</button>
+        </div>
+      </div>
+      <div class="card-body tight">
+        <div class="note" id="wf-sum" style="padding:2px 2px 10px"></div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div id="wf-chart"></div></div>
+        <div class="note" id="wf-foot" style="padding:10px 2px 0"></div>
+      </div>
+    </div>
     <div class="two-col">
       <div class="card"><div class="card-body">
         <div class="note" style="font-size:13.5px;line-height:1.6;color:var(--t2)"><b>How to read this.</b> <b>Green marks the pessimism / buy-side state, red the optimism / trim state — green means the crowd is depressed, not that the market is "good".</b>
@@ -781,6 +794,166 @@ function boot(D){
     document.querySelectorAll('#eqrange button').forEach(b=>b.addEventListener('click',()=>draw(b.dataset.r)));
     draw('MAX');
   }
+
+  // ---------- waterfall: what moved the composite (register 38) ----------
+  // Computed entirely client-side from components_ts (per-component z + state)
+  // and series.raw, both already in the payload, so it can never go stale
+  // against the rest of the page. The composite is the mean of live component
+  // states, so it moves ONLY when a component crosses a bracket: every step
+  // here is a real state change, never a drift.
+  var WF_LAB = ['pessimism', 'neutral', 'optimism'];
+
+  function wfCompute(back){
+    var ts = D.components_ts, S = D.series;
+    if (!ts || !S || !S.raw) return null;
+    var off = S.dates.length - ts.n;               // components_ts is the TAIL of the same index
+    var j1 = S.dates.length - 1, j0 = Math.max(off, j1 - back);
+    var i1 = j1 - off, i0 = j0 - off;
+    var nameOf = {}; D.components.forEach(function(c){ nameOf[c.id] = c.name; });
+    var liveA = 0, liveB = 0, steps = [];
+    Object.keys(ts.st).forEach(function(id){
+      var st = ts.st[id], z = ts.z[id] || [], a = st[i0], b = st[i1];
+      if (a != null) liveA++;
+      if (b != null) liveB++;
+      if (a == null || b == null || a === b) return;
+      steps.push({ id: id, name: nameOf[id] || id, from: a, to: b, z0: z[i0], z1: z[i1] });
+    });
+    var unit = 50 / (liveB || 12);                 // one half-step, in composite points
+    steps.forEach(function(s){ s.pts = (s.to - s.from) * unit; });
+    steps.sort(function(p, q){ return q.pts - p.pts; });
+    // series.raw is stored rounded to 2dp, so differencing the two endpoints
+    // disagrees with the exact step arithmetic by up to ~0.01 — enough that
+    // 66.7 - 45.8 reads as 20.9 against bars summing to 20.8. Derive the start
+    // from the exact walk so the chart reconciles with itself; fall back to the
+    // stored value when the live count re-based, where the gap is real.
+    var sum = steps.reduce(function(a, s){ return a + s.pts; }, 0);
+    var end = S.raw[j1], rebased = liveA !== liveB;
+    return { steps: steps, start: rebased ? S.raw[j0] : end - sum, end: end,
+             storedStart: S.raw[j0], sum: sum, d0: S.dates[j0], d1: S.dates[j1],
+             liveA: liveA, liveB: liveB, unit: unit, rebased: rebased, back: back };
+  }
+
+  function wfSvg(w){
+    var bars = w.steps.length + 2, BW = 58, GAP = 11, L = 44, R = 16, H = 300, TOP = 26, BOT = 56;
+    var W = L + bars * (BW + GAP) + R;
+    // running path, so the axis covers every intermediate level the walk touches
+    var lvls = [w.start], run = w.start;
+    w.steps.forEach(function(s){ run += s.pts; lvls.push(run); });
+    var lo = Math.min.apply(null, lvls), hi = Math.max.apply(null, lvls);
+    var pad = Math.max(4, (hi - lo) * 0.18);
+    lo = Math.max(0, lo - pad); hi = Math.min(100, hi + pad);
+    var y = function(v){ return TOP + (hi - v) / (hi - lo || 1) * (H - TOP - BOT); };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H +
+            '" role="img" aria-label="Waterfall of the composite move, ' + w.d0 + ' to ' + w.d1 +
+            ', decomposed into ' + w.steps.length + ' bracket crossings.">';
+    // gridlines
+    var ticks = 4;
+    for (var t = 0; t <= ticks; t++){
+      var v = lo + (hi - lo) * t / ticks;
+      s += '<line x1="' + L + '" y1="' + y(v).toFixed(1) + '" x2="' + (W - R) + '" y2="' + y(v).toFixed(1) +
+           '" stroke="var(--bd)"/><text x="' + (L - 7) + '" y="' + (y(v) + 3.5).toFixed(1) +
+           '" text-anchor="end" font-size="10" fill="var(--t3-text)" font-family="var(--mono)">' + v.toFixed(0) + '</text>';
+    }
+    // zone lines where visible
+    [[40, 'var(--g)', 'buy 40'], [70, 'var(--r)', 'trim 70']].forEach(function(zn){
+      if (zn[0] <= lo || zn[0] >= hi) return;
+      s += '<line x1="' + L + '" y1="' + y(zn[0]).toFixed(1) + '" x2="' + (W - R) + '" y2="' + y(zn[0]).toFixed(1) +
+           '" stroke="' + zn[1] + '" stroke-dasharray="4 4" opacity="0.7"/>' +
+           '<text x="' + (W - R - 2) + '" y="' + (y(zn[0]) - 5).toFixed(1) + '" text-anchor="end" font-size="10" fill="' +
+           zn[1] + '" font-family="var(--mono)">' + zn[2] + '</text>';
+    });
+    var x = function(i){ return L + i * (BW + GAP); };
+    var lbl = function(i, l1, l2){
+      var cx = x(i) + BW / 2;
+      return '<text x="' + cx + '" y="' + (H - 34) + '" text-anchor="middle" font-size="9.5" fill="var(--t2)">' + l1 + '</text>' +
+             (l2 ? '<text x="' + cx + '" y="' + (H - 23) + '" text-anchor="middle" font-size="9.5" fill="var(--t2)">' + l2 + '</text>' : '');
+    };
+    // start bar
+    var base = y(lo);
+    s += '<rect x="' + x(0) + '" y="' + y(w.start).toFixed(1) + '" width="' + BW + '" height="' +
+         (base - y(w.start)).toFixed(1) + '" fill="var(--b)" opacity="0.16" rx="2"/>';
+    s += '<text x="' + (x(0) + BW / 2) + '" y="' + (y(w.start) - 6).toFixed(1) +
+         '" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--b-text)" font-family="var(--mono)">' +
+         w.start.toFixed(1) + '</text>' + lbl(0, w.d0.slice(5), '');
+    // steps
+    run = w.start;
+    w.steps.forEach(function(st, k){
+      var i = k + 1, y0 = y(run), y1 = y(run + st.pts);
+      var up = st.pts > 0, top = Math.min(y0, y1), h = Math.abs(y1 - y0);
+      var full = Math.abs(st.to - st.from) === 2;
+      var fill = up ? (full ? 'var(--g)' : 'var(--g2)') : (full ? 'var(--r)' : 'var(--r2)');
+      s += '<rect x="' + x(i) + '" y="' + top.toFixed(1) + '" width="' + BW + '" height="' + Math.max(h, 2).toFixed(1) +
+           '" fill="' + fill + '" rx="2"><title>' + st.name + ': ' + WF_LAB[st.from] + ' → ' + WF_LAB[st.to] +
+           '  (' + (st.pts > 0 ? '+' : '') + st.pts.toFixed(2) + ' pts, z ' +
+           (st.z0 == null ? '—' : st.z0.toFixed(2)) + ' → ' + (st.z1 == null ? '—' : st.z1.toFixed(2)) + ')</title></rect>';
+      s += '<text x="' + (x(i) + BW / 2) + '" y="' + (top - 6).toFixed(1) + '" text-anchor="middle" font-size="10.5" font-weight="700" fill="' +
+           (up ? 'var(--g-text)' : 'var(--r-text)') + '" font-family="var(--mono)">' +
+           (up ? '+' : '−') + Math.abs(st.pts).toFixed(1) + '</text>';
+      // connector to the next bar
+      s += '<line x1="' + (x(i) + BW) + '" y1="' + y1.toFixed(1) + '" x2="' + x(i + 1) + '" y2="' + y1.toFixed(1) +
+           '" stroke="var(--bd-strong)" stroke-dasharray="2 2"/>';
+      var words = st.name.split(' ');
+      s += lbl(i, words.slice(0, 2).join(' '), words.slice(2).join(' '));
+      run += st.pts;
+    });
+    // end bar
+    var ie = w.steps.length + 1;
+    s += '<rect x="' + x(ie) + '" y="' + y(w.end).toFixed(1) + '" width="' + BW + '" height="' +
+         (base - y(w.end)).toFixed(1) + '" fill="var(--b)" opacity="0.16" rx="2"/>';
+    s += '<text x="' + (x(ie) + BW / 2) + '" y="' + (y(w.end) - 6).toFixed(1) +
+         '" text-anchor="middle" font-size="11.5" font-weight="700" fill="var(--b-text)" font-family="var(--mono)">' +
+         w.end.toFixed(1) + '</text>' + lbl(ie, w.d1.slice(5), '');
+    return s + '</svg>';
+  }
+
+  function wfRender(back){
+    var host = document.getElementById('wf-chart');
+    if (!host) return;
+    var w = wfCompute(back);
+    if (!w){ host.innerHTML = ''; return; }
+    var d = (w.end - w.start), sum = w.steps.reduce(function(a, s){ return a + s.pts; }, 0);
+    var lab = back === 1 ? 'the session' : back + ' sessions';
+    var sumEl = document.getElementById('wf-sum');
+    if (!w.steps.length){
+      host.innerHTML = '<div class="note" style="padding:26px 4px;text-align:center;color:var(--t2)">' +
+        'No component crossed a bracket over ' + lab + ' — the composite is unchanged at <b>' +
+        w.end.toFixed(1) + '</b>.<br><span style="font-size:12px">A flat reading is normal: about a quarter of all sessions since 1995 show no change at all.</span></div>';
+      sumEl.innerHTML = '<b>' + w.d1 + '</b> · no crossings over ' + lab;
+    } else {
+      host.innerHTML = wfSvg(w);
+      // 2dp here on purpose: the composite moves in twelfths, so at 1dp the two
+      // endpoints round in opposite directions and subtracting them on screen
+      // disagrees with the stated delta by 0.1. Net half-steps is the exact,
+      // integral way to read the same thing.
+      var halves = Math.round(d / w.unit);
+      sumEl.innerHTML = 'Composite <b>' + w.start.toFixed(2) + ' → ' + w.end.toFixed(2) + '</b> over ' + lab +
+        ' (' + w.d0 + ' → ' + w.d1 + ') — <b class="' + (d >= 0 ? 'pos' : 'neg') + '">' +
+        (d >= 0 ? '+' : '−') + Math.abs(d).toFixed(2) + '</b>, i.e. <b>' + (halves >= 0 ? '+' : '−') +
+        Math.abs(halves) + '</b> net half-step' + (Math.abs(halves) === 1 ? '' : 's') + ' from <b>' +
+        w.steps.length + '</b> bracket crossing' + (w.steps.length === 1 ? '' : 's') +
+        '. Hover a bar for its z move.';
+    }
+    var foot = 'The composite is the mean of live component states (optimism 100 · neutral 50 · pessimism 0), so it moves <b>only</b> when a component crosses a bracket — z-scores drift every day without shifting it. On today’s <b>' +
+      w.liveB + '</b> live components a half-step is worth <b>' + w.unit.toFixed(2) +
+      '</b> points and a full two-bracket flip <b>' + (w.unit * 2).toFixed(2) + '</b>.';
+    if (w.rebased) foot += ' <b style="color:var(--a-text)">The live count changed over this window (' + w.liveA +
+      ' → ' + w.liveB + '), so the composite re-based across a different denominator and the crossings above do not sum exactly to the move (' +
+      sum.toFixed(1) + ' vs ' + d.toFixed(1) + ').</b>';
+    document.getElementById('wf-foot').innerHTML = foot;
+  }
+
+  (function(){
+    var box = document.getElementById('wf-btns');
+    if (!box) return;
+    box.addEventListener('click', function(e){
+      var b = e.target.closest('button[data-wf]');
+      if (!b) return;
+      box.querySelectorAll('button').forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      wfRender(+b.dataset.wf);
+    });
+    wfRender(5);
+  })();
 
   // ---------- conditions & thrust tab (lazy: charts on first open) ----------
   let condDone = false;
