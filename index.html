@@ -50,7 +50,8 @@
   --radius-lg: 12px;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--bg); color:var(--t1); font-family:var(--sans); line-height:1.5; font-size:14px; }
+body { background:var(--bg); color:var(--t1); font-family:var(--sans); line-height:1.5; font-size:14px;
+       -webkit-text-size-adjust:100%; }
 .shell { max-width:1520px; margin:0 auto; padding:20px 32px 60px; }
 .masthead { padding:28px 0 22px; border-bottom:2px solid var(--t1); display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; }
 .masthead-left h1 { font-family:var(--serif); font-size:32px; font-weight:400; letter-spacing:-0.5px; }
@@ -87,14 +88,14 @@ body { background:var(--bg); color:var(--t1); font-family:var(--sans); line-heig
 .rangebtns button { font-family:var(--mono); font-size:11px; padding:4px 10px; border:1px solid var(--bd2); background:var(--bg3); color:var(--t2); border-radius:6px; cursor:pointer; }
 .rangebtns button.on { background:var(--t1); color:#fff; border-color:var(--t1); }
 table.grid { width:100%; border-collapse:collapse; font-size:12.5px; }
-table.grid th { position:sticky; top:0; background:var(--bg3); text-transform:uppercase; font-size:10.5px; letter-spacing:0.6px; color:var(--t3-text); padding:8px 10px; border-bottom:2px solid var(--bd2); text-align:right; }
+table.grid th { position:sticky; top:0; background:var(--bg3); text-transform:uppercase; font-size:11px; letter-spacing:0.6px; color:var(--t3-text); padding:8px 10px; border-bottom:2px solid var(--bd2); text-align:right; }
 table.grid th:first-child, table.grid td:first-child { text-align:left; }
 table.grid td { padding:7px 10px; border-bottom:1px solid var(--bd); font-family:var(--mono); text-align:right; }
 table.grid td:first-child { font-family:var(--sans); }
 table.grid tr:hover td { background:var(--bg-hover); }
 td.pos, span.pos { color:var(--g-text); } td.neg, span.neg { color:var(--r-text); }
 tr.hl td { background:var(--b-bg); }
-.chip { display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:0.4px; padding:2px 9px; border-radius:99px; }
+.chip { display:inline-block; font-size:11px; font-weight:700; letter-spacing:0.4px; padding:2px 9px; border-radius:99px; }
 .chip.pessimism { background:var(--g-bg2); color:var(--g-text); }
 .chip.neutral { background:var(--bg4); color:var(--t2); }
 .chip.optimism { background:var(--r-bg2); color:var(--r-text); }
@@ -106,6 +107,12 @@ tr.hl td { background:var(--b-bg); }
 .chip.volatility { background:var(--a-bg); color:var(--a-text); }
 .chip.valuation { background:var(--bg4); color:var(--t2); }
 .two-col { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:18px; }
+/* Grid items default to min-width:auto, so a card wider than its column
+   pushes the column open rather than shrinking. Measured 2026-08-13: the
+   single mobile column resolved to 479.6px and its cards to 480px, giving
+   104px of body h-scroll at 390px. Same 1fr-floors-at-min-content trap as
+   msp .grid2 and breadth-thrust-etf repeat(5,1fr). */
+.two-col > * { min-width:0; }
 .zone-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
 @media (max-width:1200px){ .zone-strip{grid-template-columns:repeat(2,1fr);} }
 .zcard { border:1px solid var(--bd); border-radius:var(--radius); padding:14px 16px; background:var(--bg2); box-shadow:var(--shadow-sm); }
@@ -116,8 +123,8 @@ tr.hl td { background:var(--b-bg); }
 .zcard .znums { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
 .zcard .znum { text-align:center; }
 .zcard .znum .v { font-family:var(--mono); font-size:15px; font-weight:700; }
-.zcard .znum .l { font-size:10px; text-transform:uppercase; letter-spacing:0.6px; color:var(--t3-text); }
-.zcard .curtag { font-size:10px; font-weight:700; letter-spacing:0.6px; padding:2px 8px; border-radius:99px; background:var(--t1); color:#fff; }
+.zcard .znum .l { font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:var(--t3-text); }
+.zcard .curtag { font-size:11px; font-weight:700; letter-spacing:0.6px; padding:2px 8px; border-radius:99px; background:var(--t1); color:#fff; }
 .comp-hist { padding:16px 18px 6px; border-top:1px solid var(--bd); }
 .comp-hist:first-of-type { border-top:none; }
 .comp-hist .chead { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
@@ -132,12 +139,12 @@ tr.hl td { background:var(--b-bg); }
 .verdict { border-radius:var(--radius); padding:12px 16px; margin-bottom:14px; font-size:14px; line-height:1.5; border-left:4px solid var(--r); background:var(--r-bg); }
 .verdict b { color:var(--r-text); }
 table.mini { width:100%; border-collapse:collapse; font-size:13px; margin:4px 0 8px; }
-table.mini th { text-align:right; padding:5px 10px; font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--t3-text); border-bottom:1px solid var(--bd2); }
+table.mini th { text-align:right; padding:5px 10px; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:var(--t3-text); border-bottom:1px solid var(--bd2); }
 table.mini th:first-child { text-align:left; }
 table.mini td { text-align:right; padding:5px 10px; font-family:var(--mono); border-bottom:1px solid var(--bd); }
 table.mini td:first-child { text-align:left; font-family:var(--sans); }
 table.mini tr.hl td { background:var(--g-bg); font-weight:700; }
-.tag { font-size:10px; font-weight:700; letter-spacing:0.3px; padding:1px 7px; border-radius:9px; background:var(--bg4); color:var(--t2); margin-left:6px; }
+.tag { font-size:11px; font-weight:700; letter-spacing:0.3px; padding:1px 7px; border-radius:9px; background:var(--bg4); color:var(--t2); margin-left:6px; }
 .tag.hi { background:var(--g-bg2); color:var(--g-text); }
 .stance { display:flex; align-items:center; gap:16px; flex-wrap:wrap; border:1px solid var(--bd); border-radius:var(--radius-lg); background:var(--bg2); box-shadow:var(--shadow-sm); padding:14px 18px; margin:0 0 4px; border-left:4px solid var(--t3); }
 .stance.over { border-left-color:var(--g); } .stance.under { border-left-color:var(--r); } .stance.flat { border-left-color:var(--t3); }
@@ -151,7 +158,7 @@ ul.caveats li { margin-bottom:7px; }
 .methodology p { font-size:13px; color:var(--t2); margin-bottom:10px; max-width:900px; }
 .footer { margin-top:30px; padding-top:14px; border-top:1px solid var(--bd); font-size:11px; color:var(--t3-text); }
 @media (max-width:1200px){ .kpi-strip{grid-template-columns:repeat(3,1fr);} }
-@media (max-width:768px){ .shell{padding:12px 14px 40px;} .kpi-strip{grid-template-columns:repeat(2,1fr);} .two-col{grid-template-columns:1fr;} }
+@media (max-width:768px){ .shell{padding:12px 14px 40px;} .kpi-strip{grid-template-columns:repeat(2,1fr);} .two-col{grid-template-columns:minmax(0,1fr);} }
 </style>
 </head>
 <body>
@@ -556,11 +563,12 @@ function boot(D){
   const bars = ['pessimism','neutral','optimism'].map(z=>({
     x:HS, y:HS.map(h=>(full.find(r=>r.zone===z&&r.h===h)||{}).mean), name:z, type:'bar', marker:{color:colors[z]},
     texttemplate:'%{y:.1f}%', textposition:'outside', cliponaxis:false,
-    textfont:{size:MOB?9:11, family:'JetBrains Mono', color:'#5c5c56'}
+    textfont:{size:11, family:'JetBrains Mono', color:'#5c5c56'}
   }));
   bars.push({x:HS, y:HS.map(h=>(full.find(r=>r.zone==='ALL'&&r.h===h)||{}).mean), name:'unconditional', type:'scatter', mode:'markers', marker:{symbol:'line-ew-open',size:26,color:'#1a1a18',line:{width:2}}});
   const flay = JSON.parse(JSON.stringify(CL));
   Object.assign(flay,{height:MOB?300:360, barmode:'group',
+    uniformtext:{minsize:11, mode:'hide'},
     xaxis:Object.assign(flay.xaxis,{tickformat:undefined,hoverformat:undefined,dtick:undefined,tickfont:{size:12.5}}),
     yaxis:Object.assign(flay.yaxis,{ticksuffix:'%',zeroline:true,zerolinecolor:'#c0beb5'})});
   try { Plotly.newPlot('chart-fwd', bars, flay, {displayModeBar:false, responsive:true}); }
@@ -659,7 +667,7 @@ function boot(D){
   let ch = '<tr><th>component</th><th>type</th><th>detail</th><th title="Effective date of the value in use — surveys/positioning enter at their public-release date, never earlier">as of</th><th>z-score</th><th>state</th></tr>';
   D.components.forEach(r=>{
     const staleOb = r.last_obs && ((new Date(c.as_of) - new Date(r.last_obs))/864e5 > 10);
-    const q = r.queued ? `<div style="font-size:10.5px;color:var(--c-text)">next ${r.queued}</div>` : '';
+    const q = r.queued ? `<div style="font-size:11px;color:var(--c-text)">next ${r.queued}</div>` : '';
     ch += `<tr data-cid="${r.id}" style="cursor:pointer"><td><b>${r.name}</b></td><td><span class="chip ${r.cat}">${r.cat}</span></td><td style="font-family:var(--sans);color:var(--t3-text)">${r.detail}</td><td${staleOb?' style="color:var(--a-text);font-weight:700"':''}>${r.last_obs||'—'}${q}</td><td>${fmt(r.z)}</td><td>${r.state?zoneChip(r.state):'—'}</td></tr>`;
   });
   document.getElementById('tbl-comps').innerHTML = ch;
@@ -696,8 +704,8 @@ function boot(D){
       ];
       const ml = JSON.parse(JSON.stringify(CL));
       Object.assign(ml, {height:190, showlegend:false, margin:{t:6,b:10,l:8,r:8},
-        xaxis:Object.assign(ml.xaxis,{tickfont:{size:10.5}}),
-        yaxis:Object.assign(ml.yaxis,{tickfont:{size:10.5,family:'JetBrains Mono'},zeroline:true,zerolinecolor:'#d5d3ca'}),
+        xaxis:Object.assign(ml.xaxis,{tickfont:{size:11}}),
+        yaxis:Object.assign(ml.yaxis,{tickfont:{size:11,family:'JetBrains Mono'},zeroline:true,zerolinecolor:'#d5d3ca'}),
         hovermode:'x'});
       try { Plotly.newPlot('ch-'+r.id, traces, ml, {displayModeBar:false, responsive:true}); }
       catch(e) { console.warn('component chart unavailable', e); }
@@ -777,7 +785,13 @@ function boot(D){
       }
       const el=JSON.parse(JSON.stringify(CL));
       Object.assign(el,{height:300,showlegend:true,legend:{x:0,y:1.02,orientation:'h',font:{size:11.5}},shapes:bands,
-        yaxis:Object.assign(el.yaxis,{type:'log',tickprefix:'$'})});
+        /* dtick:1 = one label per DECADE. A log axis left on auto also prints
+           minor labels (2,3,...,9 between decades), and Plotly renders those at
+           0.75x the tickfont — 8.25px against an 11px tickfont, which is the
+           whole of this page's remaining type-floor breach and is unreadable at
+           390px anyway. The alternative, a ~15px tickfont so the minors clear
+           11px, would make this one axis larger than every other chart's. */
+        yaxis:Object.assign(el.yaxis,{type:'log',tickprefix:'$',dtick:1})});
       try{ Plotly.react('chart-equity',[
         {x:dts,y:tilt,name:'Contrarian tilt',type:'scatter',mode:'lines',line:{color:'#1a8754',width:2}},
         {x:dts,y:bh,name:bhLabel,type:'scatter',mode:'lines',line:{color:'#2563eb',width:1.6}},
@@ -1011,8 +1025,8 @@ function boot(D){
       const lay = JSON.parse(JSON.stringify(CL));
       Object.assign(lay,{height:300, shapes, showlegend:false,
         yaxis:Object.assign(lay.yaxis,{title:{text:'stress — above 0 tight · below 0 easy',font:{size:11}}}),
-        annotations:[{xref:'paper',x:0.01,y:cd.hi*0.7,yref:'y',text:'tight (stress)',showarrow:false,font:{size:10.5,color:'#c0392b'}},
-                     {xref:'paper',x:0.01,y:cd.lo*0.6,yref:'y',text:'easy',showarrow:false,font:{size:10.5,color:'#0891b2'}}]});
+        annotations:[{xref:'paper',x:0.01,y:cd.hi*0.7,yref:'y',text:'tight (stress)',showarrow:false,font:{size:11,color:'#c0392b'}},
+                     {xref:'paper',x:0.01,y:cd.lo*0.6,yref:'y',text:'easy',showarrow:false,font:{size:11,color:'#0891b2'}}]});
       try { Plotly.newPlot('chart-fsi', trc, lay, {displayModeBar:false, responsive:true}); } catch(e){}
       let h = '<tr><th>conditions</th>'+HS.map(x=>`<th>${x}</th>`).join('')+'<th>days</th></tr>';
       [['Easy (below 0)','easy'],['Tight (above 0)','tight']].forEach(([lab,k])=>{
@@ -1040,8 +1054,8 @@ function boot(D){
       ];
       const lay = JSON.parse(JSON.stringify(CL));
       Object.assign(lay,{height:260, shapes, showlegend:false,
-        annotations:[{xref:'paper',x:0.01,y:1.9,yref:'y',text:'thrust trigger 1.9',showarrow:false,yshift:9,font:{size:10.5,color:'#1a8754'}},
-                     {xref:'paper',x:0.99,y:0.96,yref:'paper',text:'green = thrust active',showarrow:false,xanchor:'right',font:{size:10.5,color:'#1a8754'}}]});
+        annotations:[{xref:'paper',x:0.01,y:1.9,yref:'y',text:'thrust trigger 1.9',showarrow:false,yshift:9,font:{size:11,color:'#1a8754'}},
+                     {xref:'paper',x:0.99,y:0.96,yref:'paper',text:'green = thrust active',showarrow:false,xanchor:'right',font:{size:11,color:'#1a8754'}}]});
       try { Plotly.newPlot('chart-thrust', trc, lay, {displayModeBar:false, responsive:true}); } catch(e){}
       let h = '<tr><th></th>'+HS.map(x=>`<th>${x}</th>`).join('')+'</tr>';
       h += '<tr class="hl"><td><b>After a thrust — mean return</b></td>'+HS.map(hz=>`<td class="pos">+${fmt(te.after[hz].mean,1)}%</td>`).join('')+'</tr>';
