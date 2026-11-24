@@ -339,7 +339,11 @@ ul.caveats li { margin-bottom:7px; }
       <div class="note" style="padding:8px 8px 4px">Click a row to jump to that component's history below.</div></div>
     </div>
     <div class="card">
-      <div class="card-head"><h3>Component histories — last 5 years, standardised scores</h3><span class="note">line turns <span class="pos">green</span> in its pessimism state, <span class="neg">red</span> in optimism</span></div>
+      <div class="card-head"><h3>Component histories — standardised scores</h3>
+        <div class="rangebtns" id="comp-range">
+          <button data-m="3">3M</button><button data-m="6">6M</button><button data-m="12" class="on">1Y</button><button data-m="24">2Y</button><button data-m="60">5Y</button>
+        </div>
+        <span class="note" style="flex-basis:100%">line turns <span class="pos">green</span> in its pessimism state, <span class="neg">red</span> in optimism · “latest data” is the session the newest reading entered; a dotted line marks it where the value is still being carried forward</span></div>
       <div id="comp-hist-list"></div>
     </div>
     <div class="card"><div class="card-head"><h3>Mechanics</h3></div><div class="card-body methodology">
@@ -753,17 +757,47 @@ function boot(D){
   }));
 
   // ---------- component histories (lazy: built when the tab first opens) ----
-  let compChartsDone = false;
+  // Shared zoom for every component chart. Window start = composite as-of
+  // date minus N calendar months via Date.setUTCMonth (JS months are
+  // 0-indexed; setUTCMonth rolls month and year boundaries itself, and an
+  // overflowing day such as 31 Mar − 1m lands on 3 Mar, harmless for a range).
+  let compMonths = 12, compChartsDone = false;
+  const compX0 = m => { const d = new Date(c.as_of+'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth()-m); return d.toISOString().slice(0,10); };
+  const compYFit = (z, dates, x0) => {
+    let lo = Infinity, hi = -Infinity;
+    for (let i=0;i<z.length;i++){ if (dates[i] < x0 || z[i]==null) continue; if (z[i]<lo) lo=z[i]; if (z[i]>hi) hi=z[i]; }
+    if (!isFinite(lo)) return null;
+    lo = Math.min(lo, -1); hi = Math.max(hi, 1);       // keep the zero line and ±1 in view
+    const p = (hi-lo)*0.08; return [lo-p, hi+p];
+  };
+  function setCompRange(m){
+    compMonths = m;
+    document.querySelectorAll('#comp-range button').forEach(b=>b.classList.toggle('on', Number(b.dataset.m)===m));
+    if (!compChartsDone) return;
+    const dates = S.dates.slice(-D.components_ts.n), x0 = compX0(m);
+    D.components.forEach(r=>{
+      const z = D.components_ts.z[r.id]; if (!z) return;
+      const yr = compYFit(z, dates, x0);
+      try { Plotly.relayout('ch-'+r.id, Object.assign({'xaxis.range':[x0, c.as_of]}, yr?{'yaxis.range':yr}:{})); } catch(e) {}
+    });
+  }
+  document.querySelectorAll('#comp-range button').forEach(b=>b.addEventListener('click',()=>setCompRange(Number(b.dataset.m))));
   function renderCompCharts(){
     if (compChartsDone || !D.components_ts) return;
     compChartsDone = true;
     const n = D.components_ts.n;
     const dates = S.dates.slice(-n);
     const host = document.getElementById('comp-hist-list');
+    const latestTxt = r => {
+      const ent = sessionOnOrAfter(r.last_obs);
+      const stale = r.last_obs && ((new Date(c.as_of) - new Date(r.last_obs))/864e5 > 10);
+      const eff = (ent && r.last_obs && ent!==r.last_obs) ? ` <span style="color:var(--t3-text)">(effective ${r.last_obs})</span>` : '';
+      return `<span${stale?' style="color:var(--a-text);font-weight:700"':''}>latest data ${ent||r.last_obs||'—'}${stale?' · stale':''}</span>${eff}`;
+    };
     host.innerHTML = D.components.map(r=>`
       <div class="comp-hist" id="hist-${r.id}">
         <div class="chead"><h4>${r.name}</h4><span class="chip ${r.cat}">${r.cat}</span>
-          <span class="note">${r.retired ? '<span class="chip retired">retired</span> · history frozen at the '+r.retired+' survey (entered '+(r.last_obs||'—')+')' : 'now z '+fmt(r.z)+' · '+(r.state?zoneChip(r.state):'—')}</span></div>
+          <span class="note">${r.retired ? '<span class="chip retired">retired</span> · history frozen at the '+r.retired+' survey (entered '+(r.last_obs||'—')+')' : latestTxt(r)+' · now z '+fmt(r.z)+' · '+(r.state?zoneChip(r.state):'—')}</span></div>
         <div class="cdesc">${r.desc||r.detail}</div>
         <div class="csrc">Source: ${r.source||''}</div>
         <div id="ch-${r.id}" style="height:190px"></div>
@@ -778,9 +812,15 @@ function boot(D){
         {x:dates, y:inState(2), type:'scatter', mode:'lines', connectgaps:false, line:{color:'#c0392b', width:2.4}, name:'optimism state', hoverinfo:'skip'},
       ];
       const ml = JSON.parse(JSON.stringify(CL));
-      Object.assign(ml, {height:190, showlegend:false, margin:{t:6,b:10,l:8,r:8},
-        xaxis:Object.assign(ml.xaxis,{tickfont:{size:11}}),
-        yaxis:Object.assign(ml.yaxis,{tickfont:{size:11,family:'JetBrains Mono'},zeroline:true,zerolinecolor:'#d5d3ca'}),
+      const x0 = compX0(compMonths), yr = compYFit(z, dates, x0);
+      // dotted marker at the session the newest reading entered, drawn only
+      // when that is before the as-of date (value carried forward since)
+      const ent = r.retired ? null : sessionOnOrAfter(r.last_obs);
+      const shapes = (ent && ent < c.as_of) ? [{type:'line', xref:'x', yref:'paper', x0:ent, x1:ent, y0:0, y1:1,
+        line:{color:'#92400e', width:1.2, dash:'dot'}}] : [];
+      Object.assign(ml, {height:190, showlegend:false, margin:{t:6,b:10,l:8,r:8}, shapes,
+        xaxis:Object.assign(ml.xaxis,{tickfont:{size:11}, range:[x0, c.as_of]}),
+        yaxis:Object.assign(ml.yaxis,{tickfont:{size:11,family:'JetBrains Mono'},zeroline:true,zerolinecolor:'#d5d3ca'}, yr?{range:yr, autorange:false}:{}),
         hovermode:'x'});
       try { Plotly.newPlot('ch-'+r.id, traces, ml, {displayModeBar:false, responsive:true}); }
       catch(e) { console.warn('component chart unavailable', e); }
