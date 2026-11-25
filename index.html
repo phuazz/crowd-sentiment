@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
 <title>US Crowd Sentiment Composite</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="vendor/plotly-2.32.0.min.js"></script>
@@ -129,7 +130,7 @@ tr.hl td { background:var(--b-bg); }
 .comp-hist:first-of-type { border-top:none; }
 .comp-hist .chead { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
 .comp-hist .chead h4 { font-size:14px; }
-.comp-hist .cdesc { font-size:12.5px; color:var(--t2); margin:4px 0 2px; max-width:980px; }
+.comp-hist .cdesc { font-size:14px; color:var(--t2); margin:4px 0 2px; max-width:55ch; }
 .comp-hist .csrc { font-size:11px; color:var(--t3-text); margin-bottom:4px; }
 @media (max-width:768px){ .zone-strip{grid-template-columns:1fr;} .zcard .znums{grid-template-columns:repeat(4,1fr);} }
 .trigger { border:1px solid var(--bd); border-radius:var(--radius); padding:14px 16px; background:var(--bg2); }
@@ -159,7 +160,6 @@ ul.caveats li { margin-bottom:7px; }
 .footer { margin-top:30px; padding-top:14px; border-top:1px solid var(--bd); font-size:11px; color:var(--t3-text); }
 @media (max-width:1200px){ .kpi-strip{grid-template-columns:repeat(3,1fr);} }
 @media (max-width:768px){ .shell{padding:12px 14px 40px;} .kpi-strip{grid-template-columns:repeat(2,1fr);} .two-col{grid-template-columns:minmax(0,1fr);} }
-.chip.retired { background:var(--bg4); color:var(--t3-text); }
 .mob-only { display:none; }
 @media (max-width:1024px){
   /* touch targets (2026-09-10 repair pass): the range / window buttons measured
@@ -170,6 +170,7 @@ ul.caveats li { margin-bottom:7px; }
 }
 @media (max-width:768px){ .mob-only { display:block; } }
 @media (max-width:480px){
+  .comp-hist .cdesc { max-width:36ch; }
   /* the five tabs do not fit one row at 390px (strip 539px in a 362px slot,
      "Method & caveats" fully off-screen): wrap to two rows instead of scrolling */
   .tabs { flex-wrap:wrap; gap:0 18px; overflow-x:visible; }
@@ -391,7 +392,7 @@ ul.caveats li { margin-bottom:7px; }
 
   <div class="footer">
     Built <span id="foot-built">—</span> · composite data through <span id="foot-asof">—</span> · price panel: Yahoo Finance ^GSPC ·
-    inputs: AAII, NAAIM, CFTC, OFR, CBOE and exchange breadth/volume series via licensed end-of-day data (Norgate) — only derived scores and statistics are shown, never vendor series values ·
+    inputs: AAII, CFTC, OFR, CBOE and exchange breadth/volume series via licensed end-of-day data (Norgate), with NAAIM in the historical composite · only derived scores and statistics are shown, never vendor series values ·
     survey and positioning series enter at their public release or post dates, never at survey dates · educational content, not investment advice.
   </div>
 </div>
@@ -728,6 +729,7 @@ function boot(D){
     `${b.win}: unsmoothed ${fmt(b.raw,1)}% / 5d ${fmt(b.sig,1)}% (window base ${fmt(b.base,1)}%)`).join('; ');
 
   // components tab
+  const listedComponents = D.components.filter(r=>!r.retired);
   document.getElementById('comp-asof').textContent = 'composite as of ' + c.as_of + ' · green = crowd depressed there (buy-side), red = euphoric (trim-side)';
   // "entered" = the first session on or after the row's effective date. A
   // weekly row can be effective on a non-session day (2026-09-07 was a Monday
@@ -736,18 +738,15 @@ function boot(D){
   // they stay on screen at 390px; type and detail drop below 480px.
   const sessionOnOrAfter = d => { if(!d) return null; const i = S.dates.findIndex(x=>x>=d); return i<0 ? null : S.dates[i]; };
   let ch = '<tr><th>component</th><th>state</th><th>z-score</th><th title="Session on which the value in use entered the composite — surveys and positioning enter at their public release or post date, never earlier">entered</th><th class="mob-hide">type</th><th class="mob-hide">detail</th></tr>';
-  D.components.forEach(r=>{
+  listedComponents.forEach(r=>{
     const ent = sessionOnOrAfter(r.last_obs);
-    const staleOb = !r.retired && r.last_obs && ((new Date(c.as_of) - new Date(r.last_obs))/864e5 > 10);
+    const staleOb = r.last_obs && ((new Date(c.as_of) - new Date(r.last_obs))/864e5 > 10);
     const q = r.queued ? `<div style="font-size:11px;color:var(--c-text)">next ${r.queued}</div>` : '';
     const nw = s => `<span style="white-space:nowrap">${s}</span>`;
     const effNote = (ent && r.last_obs && ent!==r.last_obs) ? `<div style="font-size:11px;color:var(--t3-text)">effective<br>${nw(r.last_obs)}</div>` : '';
-    const entCell = r.retired
-      ? `frozen<br>${nw(r.last_obs||'—')}<div style="font-size:11px;color:var(--t3-text)">survey<br>${nw(r.retired)}</div>`
-      : `${nw(ent||r.last_obs||'—')}${effNote}${q}`;
-    const stateCell = r.retired ? '<span class="chip retired">retired</span>' : (r.state?zoneChip(r.state):'—');
-    const nameSub = (r.retired && r.retired_label) ? `<div style="font-size:11px;color:var(--t3-text);font-weight:400">retired ${r.retired_label}</div>` : '';
-    ch += `<tr data-cid="${r.id}" style="cursor:pointer"><td><b>${r.name}</b>${nameSub}</td><td>${stateCell}</td><td>${r.retired?'—':fmt(r.z)}</td><td${staleOb?' style="color:var(--a-text);font-weight:700"':''}>${entCell}</td><td class="mob-hide"><span class="chip ${r.cat}">${r.cat}</span></td><td class="mob-hide" style="font-family:var(--sans);color:var(--t3-text)">${r.detail}</td></tr>`;
+    const entCell = `${nw(ent||r.last_obs||'—')}${effNote}${q}`;
+    const stateCell = r.state?zoneChip(r.state):'—';
+    ch += `<tr data-cid="${r.id}" style="cursor:pointer"><td><b>${r.name}</b></td><td>${stateCell}</td><td>${fmt(r.z)}</td><td${staleOb?' style="color:var(--a-text);font-weight:700"':''}>${entCell}</td><td class="mob-hide"><span class="chip ${r.cat}">${r.cat}</span></td><td class="mob-hide" style="font-family:var(--sans);color:var(--t3-text)">${r.detail}</td></tr>`;
   });
   document.getElementById('tbl-comps').innerHTML = ch;
   document.querySelectorAll('#tbl-comps tr[data-cid]').forEach(tr=>tr.addEventListener('click',()=>{
@@ -775,7 +774,7 @@ function boot(D){
     document.querySelectorAll('#comp-range button').forEach(b=>b.classList.toggle('on', Number(b.dataset.m)===m));
     if (!compChartsDone) return;
     const dates = S.dates.slice(-D.components_ts.n), x0 = compX0(m);
-    D.components.forEach(r=>{
+    listedComponents.forEach(r=>{
       const z = D.components_ts.z[r.id]; if (!z) return;
       const yr = compYFit(z, dates, x0);
       try { Plotly.relayout('ch-'+r.id, Object.assign({'xaxis.range':[x0, c.as_of]}, yr?{'yaxis.range':yr}:{})); } catch(e) {}
@@ -795,15 +794,15 @@ function boot(D){
       const src = r.obs_date ? ` · ${r.obs_kind||'observed'} ${r.obs_date}` : '';
       return `<span${stale?' style="color:var(--a-text);font-weight:700"':''}>latest data ${ent||r.last_obs||'—'}${stale?' · stale':''}</span>${eff}${src}`;
     };
-    host.innerHTML = D.components.map(r=>`
+    host.innerHTML = listedComponents.map(r=>`
       <div class="comp-hist" id="hist-${r.id}">
         <div class="chead"><h4>${r.name}</h4><span class="chip ${r.cat}">${r.cat}</span>
-          <span class="note">${r.retired ? '<span class="chip retired">retired</span> · history frozen at the '+r.retired+' survey (entered '+(r.last_obs||'—')+')' : latestTxt(r)+' · now z '+fmt(r.z)+' · '+(r.state?zoneChip(r.state):'—')}</span></div>
+          <span class="note">${latestTxt(r)} · now z ${fmt(r.z)} · ${r.state?zoneChip(r.state):'—'}</span></div>
         <div class="cdesc">${r.desc||r.detail}</div>
         <div class="csrc">Source: ${r.source||''}</div>
         <div id="ch-${r.id}" style="height:190px"></div>
       </div>`).join('');
-    D.components.forEach(r=>{
+    listedComponents.forEach(r=>{
       const z = D.components_ts.z[r.id], st = D.components_ts.st[r.id];
       if (!z) return;
       const inState = k => z.map((v,i)=> st[i]===k ? v : null);
@@ -816,7 +815,7 @@ function boot(D){
       const x0 = compX0(compMonths), yr = compYFit(z, dates, x0);
       // dotted marker at the session the newest reading entered, drawn only
       // when that is before the as-of date (value carried forward since)
-      const ent = r.retired ? null : sessionOnOrAfter(r.last_obs);
+      const ent = sessionOnOrAfter(r.last_obs);
       const shapes = (ent && ent < c.as_of) ? [{type:'line', xref:'x', yref:'paper', x0:ent, x1:ent, y0:0, y1:1,
         line:{color:'#92400e', width:1.2, dash:'dot'}}] : [];
       Object.assign(ml, {height:190, showlegend:false, margin:{t:6,b:10,l:8,r:8}, shapes,

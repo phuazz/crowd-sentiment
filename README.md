@@ -2,13 +2,14 @@
 
 **Live: https://phuazz.github.io/crowd-sentiment/**
 
-A daily crowd-sentiment state for the S&P 500 built from 12 public-sourced
-inputs — surveys (AAII, NAAIM), positioning (CFTC COT), options (put/call,
+A daily crowd-sentiment state for the S&P 500 built from 11 live
+inputs — a survey (AAII), positioning (CFTC COT), options (put/call,
 SKEW), breadth and volume, credit vs earnings yield — each scored against
 adaptive extreme bands fitted to its own trailing history. The composite is
 the share of components at bullish extremes (half-credit for neutral),
 read contrarian: hold more equity while the crowd is depressed, trim when
-it is euphoric and financial conditions are tight.
+it is euphoric and financial conditions are tight. NAAIM, one of the original
+12 inputs, retired in August 2026 and contributes only to the historical record.
 
 Highlights of the honesty-first design:
 
@@ -20,7 +21,7 @@ Highlights of the honesty-first design:
 - Extended-bear absolute losses, overlapping-window caveats and the
   no-untouched-holdout status of the display smoothing are all disclosed.
 
-Data: public feeds (AAII, NAAIM, CFTC, OFR, Yahoo Finance) plus licensed
+Data: public feeds (AAII, CFTC, OFR, Yahoo Finance) plus licensed
 end-of-day market data (Norgate) — only derived scores and statistics are
 published, never vendor series values. Survey and positioning series enter
 at their public release dates. Updated weekly (Saturdays SGT).
