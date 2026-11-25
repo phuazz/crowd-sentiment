@@ -188,6 +188,7 @@ ul.caveats li { margin-bottom:7px; }
 .weekly-decision h2 {font-size:21px;line-height:1.2}
 .weekly-decision p,.weekly-copy {max-width:49ch;margin:8px 0 14px;line-height:1.55}
 .weekly-copy + table {margin-bottom:14px}
+.review-band {display:block;font:500 11px/1.3 var(--sans);color:var(--t2)}
 .weekly-key {display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--t2)}
 .weekly-key span:before {content:"";display:inline-block;width:18px;height:3px;margin:0 6px 3px 0;background:var(--swatch)}
 .wk-raw {--swatch:#787975}.wk-sma {--swatch:#235d94}.wk-target {--swatch:#248061}
@@ -235,22 +236,24 @@ ul.caveats li { margin-bottom:7px; }
       <div class="card-body">
         <p class="weekly-copy" id="weekly-latest"></p>
         <div class="weekly-key"><span class="wk-raw">Daily composite</span><span class="wk-sma">21-session average</span><span class="wk-target">Weekly target before cap</span></div>
-        <div id="weekly-chart" role="img" aria-label="Daily public composite, its 21-session average and the weekly overlay target"></div>
+        <div id="weekly-chart" role="img" aria-label="Daily public composite, 21-session average and weekly target. Pessimism spans 30 to below 41.5. Deep pessimism is below 30."></div>
         <div class="note"><span id="weekly-window"></span> · Source: this dashboard’s public composite. The dotted lines apply to the 21-session average on the weekly review date. The lower panel changes at the model fill close.</div>
       </div>
     </div>
     <div class="two-col">
       <div class="card"><div class="card-head"><h3>How the weekly rule works</h3></div><div class="card-body">
         <p class="weekly-copy">Take the average of the last 21 daily public composite scores. Lower readings indicate deeper pessimism.</p>
-        <table class="grid"><thead><tr><th>21-session average</th><th>Target addition</th></tr></thead><tbody>
-          <tr><td>41.5 or higher</td><td>0%</td></tr><tr><td>30 to below 41.5</td><td>+30%</td></tr><tr><td>Below 30</td><td>+60%</td></tr>
+        <table class="grid"><thead><tr><th>Weekly band</th><th>21-session average</th><th>Target addition</th></tr></thead><tbody>
+          <tr><td>Outside pessimism</td><td>41.5 or higher</td><td>0%</td></tr>
+          <tr><td>Pessimism</td><td>30 to below 41.5</td><td>+30%</td></tr>
+          <tr><td>Deep pessimism</td><td>Below 30</td><td>+60%</td></tr>
         </tbody></table>
         <p class="weekly-copy"><b>Timing.</b> Use the second-last US session of the week and apply the full target at the following week’s first close. Normally that is Thursday’s reading for Monday’s close. A single-session review week carries the existing target.</p>
         <p class="weekly-copy"><b>Funding.</b> Buy SPY with available cash, then sell SHY (the cash-equivalent holding) to fund further SPY purchases. S&amp;P 500 futures supply any remaining exposure.</p>
         <p class="weekly-copy"><b>150% cap at each fill.</b> The rule counts the base book as 100% when the breadth gate is on (sleeves at full weight) and 50% when the gate is off (half weight). A +60% target therefore becomes +50% with full sleeves or stays +60% with half sleeves. The live breadth allocation is managed separately.</p>
       </div></div>
       <div class="card"><div class="card-head"><h3>Recent proxy target changes</h3></div><div class="card-body">
-        <table class="grid weekly-history"><thead><tr><th>Review</th><th>Average</th><th>Model fill</th><th>Target</th></tr></thead><tbody id="weekly-rows"></tbody></table>
+        <table class="grid weekly-history"><thead><tr><th>Review</th><th>Average / band</th><th>Model fill</th><th>Target</th></tr></thead><tbody id="weekly-rows"></tbody></table>
         <p class="note weekly-copy">Targets are additions to the base portfolio. This public proxy can cross a threshold on a different date from the strategy’s original input. The table shows model decisions before the breadth cap.</p>
       </div></div>
     </div>
@@ -467,21 +470,30 @@ const zoneChip = z => `<span class="chip ${z}">${z}</span>`;
 function weeklyView(w) {
   const stamp = iso => new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(new Date(iso+'T12:00:00Z'));
   const size = n => n ? '+' + n + '%' : '0%';
+  const band = {0:'Outside pessimism',30:'Pessimism',60:'Deep pessimism'};
   const e = w.effective;
   document.getElementById('weekly-weight').textContent = size(e.target);
-  document.getElementById('weekly-decision').textContent = 'The public proxy averaged '+fmt(e.average)+' at the '+stamp(e.read)+' review. Its '+size(e.target)+' target took effect at the '+stamp(e.fill)+' close.';
+  document.getElementById('weekly-decision').textContent = 'At the '+stamp(e.read)+' review, the public proxy averaged '+fmt(e.average)+' ('+band[e.target].toLowerCase()+'). Its '+size(e.target)+' target took effect at the '+stamp(e.fill)+' close.';
   document.getElementById('weekly-next').textContent = w.pending
-    ? 'Next model close: '+stamp(w.next_fill)+' · '+size(w.pending.target)+' from the '+stamp(w.next_read)+' reading.'
+    ? 'Next model close: '+stamp(w.next_fill)+' · '+size(w.pending.target)+' ('+band[w.pending.target].toLowerCase()+') from the '+stamp(w.next_read)+' reading.'
     : 'Next review: '+stamp(w.next_read)+' · next model close: '+stamp(w.next_fill)+'.';
   document.getElementById('weekly-latest').textContent = 'At '+stamp(w.asof)+', the daily composite was '+fmt(w.raw.at(-1))+' and its 21-session average was '+fmt(w.latest)+'. The weekly review sets the target.';
-  document.getElementById('weekly-rows').innerHTML = w.changes.map(r=>'<tr><td>'+stamp(r.read)+'</td><td>'+fmt(r.average)+'</td><td>'+stamp(r.fill)+'</td><td>'+size(r.target)+'</td></tr>').join('') || '<tr><td colspan="4">No changes in the available review history.</td></tr>';
+  document.getElementById('weekly-rows').innerHTML = w.changes.map(r=>'<tr><td>'+stamp(r.read)+'</td><td>'+fmt(r.average)+'<span class="review-band">'+band[r.target]+'</span></td><td>'+stamp(r.fill)+'</td><td>'+size(r.target)+'</td></tr>').join('') || '<tr><td colspan="4">No changes in the available review history.</td></tr>';
   const layout = JSON.parse(JSON.stringify(CL));
-  const lines = [[41.5,'&lt;41.5 → +30%'],[30,'&lt;30 → +60%']];
-  Object.assign(layout,{height:340,margin:{t:12,b:30,l:37,r:88},showlegend:false,
+  const zones = [
+    {low:30, high:41.5, target:30, fill:'rgba(35,93,148,0.07)'},
+    {low:0, high:30, target:60, fill:'rgba(35,93,148,0.17)'}
+  ];
+  Object.assign(layout,{height:340,margin:{t:12,b:30,l:37,r:100},showlegend:false,
     xaxis:{...layout.xaxis,anchor:'y2',nticks:MOB?4:8},yaxis:{...layout.yaxis,domain:[.34,1],side:'left',range:[0,100],dtick:25},
     yaxis2:{domain:[0,.21],range:[-5,65],tickvals:[0,30,60],ticksuffix:'%',gridcolor:'#e5e5de',tickfont:{size:11}},
-    shapes:lines.map(([y])=>({type:'line',xref:'paper',x0:0,x1:1,yref:'y',y0:y,y1:y,line:{color:'#a05936',width:1,dash:'dot'}})),
-    annotations:lines.map(([y,t])=>({xref:'paper',x:1.01,xanchor:'left',yref:'y',y,text:t,showarrow:false,font:{size:11,color:'#884821'}}))
+    shapes:zones.flatMap(z=>[
+      {type:'rect',layer:'below',xref:'paper',x0:0,x1:1,yref:'y',y0:z.low,y1:z.high,fillcolor:z.fill,line:{width:0}},
+      {type:'line',xref:'paper',x0:0,x1:1,yref:'y',y0:z.high,y1:z.high,line:{color:'#64768a',width:1,dash:'dot'}}
+    ]),
+    annotations:zones.map(z=>({xref:'paper',x:1.01,xanchor:'left',yref:'y',y:z.high,
+      yanchor:z.low?'bottom':'top',align:'left',text:band[z.target]+'<br>'+(z.low?z.low+'–':'')+'&lt;'+z.high+' · '+size(z.target),
+      showarrow:false,font:{size:11,color:'#304b68'}}))
   });
   const ranges = document.querySelectorAll('#weekly-ranges button');
   function showWindow(button) {
