@@ -18,7 +18,13 @@ following week’s first close. The chart and decision history show
 targets before the breadth-based 150% cap. The public proxy can trigger
 on different dates from the strategy’s original input.
 
-The other tabs retain the separate five-day signal and its research:
+The price chart and forward-return panels distinguish Pessimism from Deep
+pessimism using the weekly review band. Index price returns run from the
+model fill close to the close 5, 21, 63, 126 or 252 sessions later.
+Each table cell gives its eligible review count. Consecutive weekly
+reviews can have overlapping forward windows.
+
+The dashboard also retains the separate five-day signal and its research:
 
 - **State conditioner, not an entry trigger** — zone-entry timing fails
   random-entry nulls; the one significant trigger (fresh drop below 25) is
