@@ -265,7 +265,7 @@ ul.caveats li { margin-bottom:7px; }
         </tbody></table>
         <p class="weekly-copy"><b>Timing.</b> Use the second-last US session of the week and apply the full target at the following week’s first close. Normally that is Thursday’s reading for Monday’s close. A single-session review week carries the existing target.</p>
         <p class="weekly-copy"><b>Funding.</b> Buy SPY with available cash, then sell SHY (the cash-equivalent holding) to fund further SPY purchases. S&amp;P 500 futures supply any remaining exposure.</p>
-        <p class="weekly-copy"><b>150% cap at each fill.</b> The rule counts the base book as 100% when the breadth gate is on (sleeves at full weight) and 50% when the gate is off (half weight). A +60% target therefore becomes +50% with full sleeves or stays +60% with half sleeves. The live breadth allocation is managed separately.</p>
+        <p class="weekly-copy"><b>150% sizing limit.</b> Use the breadth gate known at the preceding close. Full sleeves count as 100%, leaving room for a +50% overlay. Half sleeves count as 50%, allowing the full +60%. If the gate changes at the fill close or between trades, the combined counted exposure can exceed 150% until the next weekly fill.</p>
       </div></div>
       <div class="card"><div class="card-head"><h3>Recent proxy target changes</h3></div><div class="card-body">
         <table class="grid weekly-history"><thead><tr><th>Review</th><th>Average / band</th><th>Model fill</th><th>Target</th></tr></thead><tbody id="weekly-rows"></tbody></table>
@@ -582,8 +582,7 @@ function boot(D){
   document.getElementById('foot-built').textContent = D.built;
   document.getElementById('foot-asof').textContent = c.as_of;
   const zcls = z => z==='pessimism'?'pos':(z==='optimism'?'neg':'neu');
-  const fsiCap = c.fsi_z==null ? '' : (c.fsi_z < -0.25 ? 'easy — sell signals unreliable'
-                 : (c.fsi_z > 0.25 ? 'tight — optimism signals bite' : 'conditions neutral'));
+  const fsiCap = D.conditions?.state ?? '';
   // zone gauge (0-100 with buy/neutral/trim bands + marker) and sparklines
   const gauge = v => { const p=Math.max(1.5,Math.min(98.5,v));
     return `<div class="gaugebar"><div class="mk" style="left:${p}%"></div></div>`; };
@@ -611,7 +610,7 @@ function boot(D){
     <div class="kpi kpi-wide"><div class="kpi-label">Composite (5d) — crowd sentiment</div><div class="kpi-val ${zcls(c.zone_sig)}">${fmt(c.sig,1)}${arrow(wowSig)}</div>${gauge(c.sig)}<div class="kpi-sub"><span style="color:var(--g-text)">buy &lt;40</span> · neutral · <span style="color:var(--r-text)">trim &gt;70</span> — now <b>${c.zone_sig}</b></div></div>
     <div class="kpi"><div class="kpi-label">Equity stance</div><div class="kpi-val ${c.tilt_weight>100?'pos':(c.tilt_weight<100?'neg':'neu')}">${c.tilt_weight==null?'—':c.tilt_weight+'%'}</div><div class="kpi-sub">contrarian tilt · ${weightWord(c.tilt_weight)||'—'}</div></div>
     <div class="kpi"><div class="kpi-label">Breadth thrust</div><div class="kpi-val ${c.thrust?'pos':'neu'}">${c.thrust?'ON':'—'}</div><div class="kpi-sub">10d A/D ${fmt(c.thrust_ratio,2)} · last ${c.thrust_last_fired||'—'}</div></div>
-    <div class="kpi"><div class="kpi-label">Financial conditions</div><div class="kpi-val ${c.fsi_z>0?'neg':'neu'}">${fmt(c.fsi_z,2)}</div><div class="kpi-sub">${fsiCap}</div></div>
+    <div class="kpi"><div class="kpi-label">Financial conditions</div><div class="kpi-val ${fsiCap==='tight'?'neg':'neu'}">${fmt(c.fsi_z,2)}</div><div class="kpi-sub">${fsiCap}</div></div>
     <div class="kpi"><div class="kpi-label">Components live</div><div class="kpi-val ${c.n_active>=NEXP?'neu':'neg'}">${c.n_active} of ${NEXP}</div><div class="kpi-sub">${NDES} designed · ${retiredTxt} · stale feeds auto-drop</div></div>
     <div class="kpi kpi-wide"><div class="kpi-label">S&amp;P 500</div><div class="kpi-val neu">${c.spx_pub==null?'—':Number(c.spx_pub).toLocaleString()}</div>${spark(spxTail)}<div class="kpi-sub">Yahoo Finance · last 90 sessions</div></div>`;
 
@@ -805,8 +804,10 @@ function boot(D){
     xaxis:{type:'linear',tickvals:[-63,0,63,126],ticktext:['−3m','Fill','+3m','+6m'],range:[-66,129]},
     yaxis:{side:'left',automargin:true},shapes:[{type:'line',x0:0,x1:0,y0:0,y1:1,yref:'paper',layer:'below',line:{color:'#777',width:1,dash:'dot'}}]});
   Plotly.newPlot('entry-chart',entryTraces,entryLayout,{displayModeBar:false,responsive:true});
+  const intoPessimism = entries.events.filter(e=>e.target===30 && e.return6!=null);
+  const fromOutside = intoPessimism.filter(e=>e.previous===0).length;
   document.getElementById('entry-source').textContent =
-    'Public composite and Yahoo S&P 500 closes through '+stamp(forward.asof)+'. Lines use equal-weighted entries with all 63 prior and 126 subsequent sessions. Both upgrades and downgrades count. Consecutive weeks in one band count once. Windows can overlap. Price returns exclude dividends and trading costs.';
+    'Public composite and Yahoo S&P 500 closes through '+stamp(forward.asof)+'. Lines use equal-weighted band changes with all 63 prior and 126 subsequent sessions. Of the '+intoPessimism.length+' completed six-month entries into pessimism, '+fromOutside+' came from outside pessimism and '+(intoPessimism.length-fromOutside)+' were recoveries from deep pessimism. Windows overlap. These are index price returns before dividends and costs. Portfolio returns depend on sizing and funding.';
   document.getElementById('entry-count').textContent =
     'View all '+entries.events.length+' band changes and six-month outcomes';
   document.getElementById('entry-rows').innerHTML = entries.events.slice().reverse().map(e=>
