@@ -443,7 +443,9 @@ ul.caveats li { margin-bottom:7px; }
   <div class="panel" id="p-method">
     <div class="card">
       <div class="card-head"><h3>Why 40 / 70 and 5-day smoothing</h3><span class="note">deeper zones lift quality at every smoothing; smoothing cuts turnover — matched/continuous variants in the table below</span></div>
-      <div class="card-body tight"><div id="chart-why" style="height:360px"></div></div>
+      <div class="card-body tight"><div id="chart-why" style="height:360px"></div>
+        <p class="note" style="padding:0 8px">The spread is the difference in mean 3-month S&amp;P 500 returns after pessimism and optimism readings. Solid spread lines show 2016 onwards. Dashed spread lines show the earlier period.</p>
+      </div>
       <div class="card-body" style="border-top:1px solid var(--bd)">
         <ul class="caveats">
           <li><b>Deeper zones (40/70) raise the quality of every read.</b> Versus 45/65, the pessimism-minus-optimism 3-month spread improves in BOTH the pre-2016 and post-2016 eras, at the price of rarer signals (~17% of days in pessimism instead of ~25%).</li>
@@ -1037,24 +1039,28 @@ function boot(D){
       mk(f4070,'flips_yr','zones 40/70','#2563eb',false,2,false),
       mk(f4565,'flips_yr','zones 45/65','#8a8a82',false,2,false),
     ];
-    const wl = JSON.parse(JSON.stringify(CL));
-    // Side by side the two panel titles collided at 390px and the legend was
-    // clipped ("zones 45/6"); on narrow screens the panels stack vertically
-    const stack = MOB;
-    Object.assign(wl,{height:stack?640:360, hovermode:'x unified', margin:{t:stack?104:48,b:20,l:8,r:8},
-      xaxis:Object.assign({},wl.xaxis,{type:'category',tickformat:undefined,hoverformat:undefined,domain:stack?[0,1]:[0,0.44],anchor:'y',tickfont:{size:12.5}}),
-      xaxis2:Object.assign({},wl.xaxis,{type:'category',tickformat:undefined,hoverformat:undefined,domain:stack?[0,1]:[0.56,1],anchor:'y2',tickfont:{size:12.5}}),
-      yaxis:Object.assign({},wl.yaxis,{zeroline:true,zerolinecolor:'#c0beb5',rangemode:'tozero',domain:stack?[0.58,1]:[0,1],anchor:'x'}),
-      yaxis2:Object.assign({},wl.yaxis,{rangemode:'tozero',domain:stack?[0,0.42]:[0,1],anchor:'x2'}),
-      legend:{x:0, y:stack?1.32:1.16, orientation:'h', font:{size:11.5}, bgcolor:'transparent'},
-      annotations:[
-        {xref:'paper',yref:'paper',x:stack?0.5:0.20,y:stack?1.05:1.07,text:stack?'<b>signal quality</b> — 3m spread, pp<br>solid post-2015 · dashed pre-2016':'<b>signal quality</b> — 3m spread, pp (solid post-2015 · dashed pre-2016)',showarrow:false,font:{size:11.5,color:'#5c5c56'},xanchor:'center',yanchor:'bottom'},
-        {xref:'paper',yref:'paper',x:stack?0.5:0.79,y:stack?0.455:1.07,text:'<b>turnover</b> — zone flips per year',showarrow:false,font:{size:11.5,color:'#5c5c56'},xanchor:'center'},
-        {x:'5d',y:f4070[1].spread3m_test,xref:'x',yref:'y',text:'adopted',showarrow:true,arrowhead:2,arrowcolor:'#1a1a18',ax:0,ay:-28,font:{size:11.5,color:'#1a1a18'}},
-        {x:'5d',y:f4070[1].flips_yr,xref:'x2',yref:'y2',text:'15/yr',showarrow:true,arrowhead:2,arrowcolor:'#1a1a18',ax:0,ay:-28,font:{size:11,color:'#1a1a18'}}
-      ]});
-    try { Plotly.newPlot('chart-why', traces2, wl, {displayModeBar:false, responsive:true}); }
-    catch(e) { console.warn('why chart unavailable', e); }
+    const breakpoint = matchMedia('(max-width:768px)');
+    function drawChart(){
+      const wl = structuredClone(CL);
+      const stack = breakpoint.matches;
+      Object.assign(wl,{height:stack?640:360, hovermode:'x unified', margin:{t:40,b:62,l:8,r:8},
+        xaxis:Object.assign({},wl.xaxis,{type:'category',tickformat:undefined,hoverformat:undefined,domain:stack?[0,1]:[0,0.44],anchor:'y',tickfont:{size:12.5}}),
+        xaxis2:Object.assign({},wl.xaxis,{type:'category',tickformat:undefined,hoverformat:undefined,domain:stack?[0,1]:[0.56,1],anchor:'y2',tickfont:{size:12.5}}),
+        yaxis:Object.assign({},wl.yaxis,{zeroline:true,zerolinecolor:'#c0beb5',rangemode:'tozero',domain:stack?[0.58,1]:[0,1],anchor:'x'}),
+        yaxis2:Object.assign({},wl.yaxis,{rangemode:'tozero',domain:stack?[0,0.42]:[0,1],anchor:'x2'}),
+        legend:{x:0.5,xanchor:'center',y:stack?-.06:-.12,yanchor:'top',orientation:'h',font:{size:11.5},bgcolor:'transparent'},
+        annotations:[
+          {xref:'x domain',yref:'y domain',x:.5,y:1,yshift:8,text:'<b>3-month return spread</b> (percentage points)',showarrow:false,font:{size:11.5,color:'#5c5c56'},xanchor:'center',yanchor:'bottom'},
+          {xref:'x2 domain',yref:'y2 domain',x:.5,y:1,yshift:8,text:'<b>Turnover</b> (zone flips per year)',showarrow:false,font:{size:11.5,color:'#5c5c56'},xanchor:'center',yanchor:'bottom'},
+          {x:'5d',y:f4070[1].spread3m_test,xref:'x',yref:'y',text:'adopted',showarrow:true,arrowhead:2,arrowcolor:'#1a1a18',ax:0,ay:-28,font:{size:11.5,color:'#1a1a18'}},
+          {x:'5d',y:f4070[1].flips_yr,xref:'x2',yref:'y2',text:'15/yr',showarrow:true,arrowhead:2,arrowcolor:'#1a1a18',ax:0,ay:-28,font:{size:11,color:'#1a1a18'}}
+        ]});
+      const chart = document.getElementById('chart-why');
+      chart.style.height = wl.height+'px';
+      Plotly.react(chart,traces2,wl,{displayModeBar:false,responsive:true});
+    }
+    drawChart();
+    breakpoint.addEventListener('change',drawChart);
   })();
 
   // ---------- equity curve with rebase-to-window selector ----------
