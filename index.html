@@ -187,6 +187,11 @@ ul.caveats li { margin-bottom:7px; }
 @media(max-width:1050px){.two-col.weekly-tables{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:480px){table.weekly-matrix th,table.weekly-matrix td{padding:5px 2px;letter-spacing:0}}
 .weekly-key {display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--t2)}
+.price-key {display:flex;flex-wrap:wrap;gap:4px 16px;margin:0 6px 4px}
+.price-key button {display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:2px 0;border:0;background:transparent;color:var(--t2);font:inherit;font-size:12px;cursor:pointer}
+.price-key button::before {content:"";width:18px;height:3px;background:var(--swatch)}
+.price-key .thrust-key::before {width:12px;height:12px}
+.price-key button[aria-pressed="false"] {text-decoration:line-through}
 .weekly-key span:before {content:"";display:inline-block;width:18px;height:3px;margin:0 6px 3px 0;background:var(--swatch)}
 .wk-raw {--swatch:#787975}.wk-sma {--swatch:#235d94}.wk-target {--swatch:#248061}
 #weekly-chart {height:405px}
@@ -275,7 +280,14 @@ ul.caveats li { margin-bottom:7px; }
           <button data-y="1">1Y</button><button data-y="3">3Y</button><button data-y="5" class="on">5Y</button><button data-y="10">10Y</button><button data-y="all">ALL</button>
         </div>
       </div>
-      <div class="card-body tight"><div id="chart-main" style="height:600px"></div>
+      <div class="card-body tight">
+        <div class="price-key" id="price-key" role="group" aria-label="Show or hide chart series">
+          <button type="button" aria-pressed="true" style="--swatch:#2563eb">S&amp;P 500</button>
+          <button type="button" aria-pressed="true" style="--swatch:#b0b0a8">Daily composite</button>
+          <button type="button" aria-pressed="true" id="price-smooth-key" style="--swatch:#235d94">21-session average</button>
+          <button type="button" aria-pressed="true" class="thrust-key" style="--swatch:#c4dfcf">Breadth thrust</button>
+        </div>
+        <div id="chart-main" style="height:600px"></div>
         <div class="note" id="price-caption" style="padding:6px 8px 2px;line-height:1.6"></div></div>
     </div>
     <section id="week-forward-cards"><h3>Weekly review bands · forward S&amp;P 500 returns</h3>
@@ -602,15 +614,10 @@ function boot(D){
     {x:S.dates,y:S.spx,name:'S&P 500 (log, Yahoo)',type:'scatter',mode:'lines',line:{color:'#2563eb',width:1.6},xaxis:'x',yaxis:'y',connectgaps:true},
     {x:S.dates,y:S.raw,name:'composite (unsmoothed)',type:'scatter',mode:'lines',line:{color:'#b0b0a8',width:1},xaxis:'x',yaxis:'y2'},
     {x:S.dates,y:S.sig,name:'composite (5d)',type:'scatter',mode:'lines',line:{color:'#e8590c',width:2.4},xaxis:'x',yaxis:'y2'},
-    // legend-only swatch explaining the green shading (renders no points)
-    {x:[null],y:[null],type:'scatter',mode:'markers',marker:{size:11,color:'rgba(26,135,84,0.25)',symbol:'square'},
-     name:'breadth thrust (each fire held ~3m; clustered fires merge — see Conditions & thrust)',hoverinfo:'skip',xaxis:'x',yaxis:'y'},
   ];
   const lay = JSON.parse(JSON.stringify(CL));
   Object.assign(lay,{
-    // on narrow screens the four-entry legend wrapped over the price line and
-    // the last entry ran off the plot; a caption under the chart replaces it
-    height:MOB?470:600, shapes, showlegend:!MOB,
+    height:MOB?470:600, shapes, showlegend:false,
     grid:{rows:2, columns:1, roworder:'top to bottom'},
     // both panels share one x-axis: hover the price and read the sentiment at
     // the SAME date in one label (Plotly >=2.32; default 'overlaying' showed
@@ -629,6 +636,15 @@ function boot(D){
   });
   lay.shapes.forEach(s=>{ if(s.type==='line') s.line.width = 1.5; });
   const mode = document.getElementById('chart-signal-mode');
+  const priceKeys = [...document.querySelectorAll('#price-key button')];
+  const isShown = button => button.getAttribute('aria-pressed') === 'true';
+  priceKeys.forEach((button,index)=>button.addEventListener('click',()=>{
+    const show = !isShown(button);
+    button.setAttribute('aria-pressed',String(show));
+    const plot = document.getElementById('chart-main');
+    if(index < traces.length) Plotly.restyle(plot,{visible:show},[index]);
+    else Plotly.relayout(plot,{shapes:plot.layout.shapes.map(s=>s.yref==='paper'?{...s,visible:show}:s)});
+  }));
   function renderPrice() {
     const weekly = mode.value === 'weekly';
     document.getElementById('week-forward-cards').hidden = !weekly;
@@ -646,6 +662,10 @@ function boot(D){
       ];
     }
     const reading = weekly ? '21-session average' : 'five-day research average';
+    priceKeys[2].textContent = weekly ? '21-session average' : '5-session average';
+    priceKeys[2].style.setProperty('--swatch',series[2].line.color);
+    series.forEach((trace,i)=>{series[i]={...trace,visible:isShown(priceKeys[i])};});
+    plotLayout.shapes = plotLayout.shapes.map(s=>s.yref==='paper'?{...s,visible:isShown(priceKeys[3])}:s);
     document.getElementById('price-caption').textContent = 'S&P 500 (Yahoo, log scale) above. Daily public composite and '+reading+' below. Latest '+reading+': '+fmt(latest)+' on '+stamp(S.dates.at(-1))+'. Green shading in the price panel marks active breadth thrusts.';
     Plotly.react('chart-main',series,plotLayout,{displayModeBar:false,responsive:true}).then(()=>
       setRange(document.querySelector('#rangebtns .on').dataset.y));
