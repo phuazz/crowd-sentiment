@@ -33,8 +33,6 @@ The dashboard also retains the separate five-day signal and its research:
 - **State conditioner, not an entry trigger** — zone-entry timing fails
   random-entry nulls; the one significant trigger (fresh drop below 25) is
   shown with cluster-preserving p-values.
-- **A costed tilt overlay was tested under a pre-registered rule and
-  REJECTED** — published on the page as a negative result.
 - Extended-bear absolute losses, overlapping-window caveats and the
   no-untouched-holdout status of the display smoothing are all disclosed.
 
