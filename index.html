@@ -233,10 +233,10 @@ ul.caveats li { margin-bottom:7px; }
     <button class="tab" role="tab" aria-selected="false" data-p="method">Method &amp; caveats</button>
   </div>
 
-  <div id="weekly-context" hidden><strong id="context-state"></strong><span>Pessimism · 30 to below 41.5 · +30% equity. Deep pessimism · below 30 · +60% before the cap.</span></div>
+  <div id="weekly-context" hidden><strong id="context-state"></strong><span>Signal targets before sizing: +30% in pessimism, +60% in deep pessimism. Breadth takes its full allocation first.</span></div>
   <section class="panel active" id="p-weekly" aria-label="Weekly sentiment overlay">
     <div class="weekly-summary card">
-      <div class="weekly-figure"><div class="kpi-label">S&amp;P 500 equity overlay</div><strong id="weekly-weight">—</strong><div class="note">additional exposure · % of NAV before cap</div></div>
+      <div class="weekly-figure"><div class="kpi-label">S&amp;P 500 equity overlay</div><strong id="weekly-weight">—</strong><div class="note">signal target · % of NAV before sizing</div></div>
       <div class="weekly-decision"><h2>S&amp;P 500 equity overlay</h2><p id="weekly-decision"></p><p class="note" id="weekly-next"></p></div>
     </div>
     <div class="card">
@@ -254,7 +254,7 @@ ul.caveats li { margin-bottom:7px; }
         <p class="weekly-copy" id="weekly-latest"></p>
         <div class="weekly-key"><span class="wk-raw">Daily composite</span><span class="wk-sma">21-session average</span><span class="wk-target">S&amp;P 500 equity overlay</span></div>
         <div id="weekly-chart" role="img" aria-label="Daily public composite, 21-session average and weekly target. Pessimism spans 30 to below 41.5. Deep pessimism is below 30."></div>
-        <div class="note"><span id="weekly-window"></span> · Source: this dashboard’s public composite. The dotted lines apply to the 21-session average on the weekly review date. The lower panel changes at the model fill close.</div>
+        <div class="note"><span id="weekly-window"></span> · Source: this dashboard’s public composite. The dotted lines apply to the 21-session average at review. The lower panel shows the signal target at each model fill. The portfolio can take a smaller position under the 145% weekly equity cap.</div>
       </div>
     </div>
     <div class="two-col">
@@ -265,13 +265,15 @@ ul.caveats li { margin-bottom:7px; }
           <tr><td><span class="band-light">Pessimism</span></td><td>30 to below 41.5</td><td>+30%</td></tr>
           <tr><td><span class="band-deep">Deep pessimism</span></td><td>Below 30</td><td>+60%</td></tr>
         </tbody></table>
-        <p class="weekly-copy"><b>Timing.</b> Use the second-last US session of the week and apply the full target at the following week’s first close. Normally that is Thursday’s reading for Monday’s close. A single-session review week carries the existing target.</p>
+        <p class="weekly-copy"><b>Timing.</b> Use the second-last US session of the week to set the signal target. Size the overlay at the following week’s first close, normally using Thursday’s reading for Monday’s trade. A single-session review week carries the existing position.</p>
+        <p class="weekly-copy"><b>Weekly sizing.</b> Give the breadth portfolio its full allocation first. Subtract its projected equity exposure from 145% of NAV. The S&amp;P 500 overlay gets the smaller of the signal target and the remaining room. If breadth uses all the room, the overlay is zero. Count equity holdings and the full notional of equity futures. Cash and SHY contribute zero equity.</p>
+        <p class="weekly-copy"><b>Example.</b> With 95% in breadth equities, a +30% signal fits in full and brings total equity to 125%. A +60% signal adds only 50%, bringing total equity to 145%.</p>
+        <p class="weekly-copy"><b>Between reviews.</b> The five percentage points from 145% to 150% allow for drift. Trim the overlay if a midweek breadth trade would take total equity above 150%. If closing equity exceeds 150%, size an overlay reduction for the next executable close to bring total equity back to 145% or less.</p>
         <p class="weekly-copy"><b>Funding.</b> Buy SPY with available cash, then sell SHY (the cash-equivalent holding) to fund further SPY purchases. S&amp;P 500 futures supply any remaining exposure.</p>
-        <p class="weekly-copy"><b>150% sizing limit.</b> Use the breadth gate known at the preceding close. Full sleeves count as 100%, leaving room for a +50% overlay. Half sleeves count as 50%, allowing the full +60%. If the gate changes at the fill close or between trades, the combined counted exposure can exceed 150% until the next weekly fill.</p>
       </div></div>
       <div class="card"><div class="card-head"><h3>Recent proxy target changes</h3></div><div class="card-body">
         <table class="grid weekly-history"><thead><tr><th>Review</th><th>Average / band</th><th>Model fill</th><th>Target</th></tr></thead><tbody id="weekly-rows"></tbody></table>
-        <p class="note weekly-copy">Targets are additions to the base portfolio. This public proxy can cross a threshold on a different date from the strategy’s original input. The table shows model decisions before the breadth cap.</p>
+        <p class="note weekly-copy">The table shows public signal targets before portfolio sizing. The public proxy can cross a threshold on a different date from the strategy’s original input.</p>
       </div></div>
     </div>
   </section>
@@ -342,7 +344,7 @@ ul.caveats li { margin-bottom:7px; }
       </div>
     </section>
     <div class="card"><div class="card-head"><h3>S&amp;P 500 overlay · time at each weekly target</h3></div><div class="card-body">
-      <table class="grid"><thead><tr><th>Weekly review band</th><th>Target before cap</th><th>Sessions held</th></tr></thead><tbody id="weekly-counts"></tbody></table>
+      <table class="grid"><thead><tr><th>Weekly review band</th><th>Signal target before sizing</th><th>US sessions</th></tr></thead><tbody id="weekly-counts"></tbody></table>
       <p class="note" id="weekly-count-dates"></p></div></div>
     <div class="card">
       <div class="card-head"><h3>Forward S&amp;P 500 price returns by weekly review band</h3><span class="note">Full history · mean return</span></div>
@@ -527,14 +529,14 @@ function weeklyView(w) {
   const size = n => n ? '+' + n + '%' : '0%';
   const band = {0:'Outside pessimism',30:'Pessimism',60:'Deep pessimism'};
   const e = w.effective;
-  document.getElementById('context-state').textContent = 'Weekly S&P 500 equity overlay · '+band[e.target]+' · '+size(e.target)+' before cap · '+stamp(e.fill)+' close';
+  document.getElementById('context-state').textContent = 'Weekly S&P 500 equity overlay · '+band[e.target]+' · '+size(e.target)+' before sizing · '+stamp(e.fill)+' close';
   const countDates = w.dates.slice(-1260), countTargets = w.desired.slice(-1260);
   document.getElementById('weekly-counts').innerHTML = [0,30,60].map(t=>
     '<tr><td><span class="'+weeklyBandClass(t)+'">'+band[t]+'</span></td><td>'+size(t)+'</td><td>'+countTargets.filter(v=>v===t).length+'</td></tr>'
   ).join('');
   document.getElementById('weekly-count-dates').textContent = stamp(countDates[0])+' – '+stamp(w.asof)+' · '+countDates.length+' US closes. Each session counts under the target in effect at its close.';
   document.getElementById('weekly-weight').textContent = size(e.target);
-  document.getElementById('weekly-decision').textContent = 'At the '+stamp(e.read)+' review, the public proxy averaged '+fmt(e.average)+' ('+band[e.target].toLowerCase()+'). Its '+size(e.target)+' target took effect at the '+stamp(e.fill)+' close.';
+  document.getElementById('weekly-decision').textContent = 'At the '+stamp(e.read)+' review, the public proxy averaged '+fmt(e.average)+' ('+band[e.target].toLowerCase()+'), setting a '+size(e.target)+' signal target for the '+stamp(e.fill)+' close. Breadth takes its full allocation first. The overlay uses the equity room left under 145% of NAV.';
   document.getElementById('weekly-next').textContent = w.pending
     ? 'Next model close: '+stamp(w.next_fill)+' · '+size(w.pending.target)+' ('+band[w.pending.target].toLowerCase()+') from the '+stamp(w.next_read)+' reading.'
     : 'Next review: '+stamp(w.next_read)+' · next model close: '+stamp(w.next_fill)+'.';
@@ -548,7 +550,7 @@ function weeklyView(w) {
     annotations:weeklyZones.map(z=>({xref:'paper',x:1.01,xanchor:'left',yref:'y',y:z.high,
       yanchor:z.low?'bottom':'top',align:'left',text:band[z.target]+'<br>'+(z.low?z.low+'–':'')+'&lt;'+z.high+' · '+size(z.target),
       showarrow:false,font:{size:11,color:'#215c3c'}})).concat([
-      {xref:'paper',x:0,xanchor:'left',yref:'paper',y:.245,yanchor:'bottom',text:'<b>S&amp;P 500 equity overlay</b> · % of NAV before cap',showarrow:false,font:{size:11,color:'#254d42'}},
+      {xref:'paper',x:0,xanchor:'left',yref:'paper',y:.245,yanchor:'bottom',text:'<b>S&amp;P 500 equity overlay</b> · % of NAV before sizing',showarrow:false,font:{size:11,color:'#254d42'}},
       {xref:'paper',x:1.01,xanchor:'left',yref:'y2',y:e.target,text:'Latest '+size(e.target),showarrow:false,font:{size:11,color:'#216249'}}
     ])
   });

@@ -14,8 +14,12 @@ The landing tab shows the weekly S&P 500 overlay. The 21-session average
 sets the target addition to the base portfolio at 0% for readings of
 41.5 or above, +30% from 30 to below 41.5 and +60% below 30. The
 second-last NYSE session of the week supplies the reading for the
-following week’s first close. The chart and decision history show
-targets before the breadth-based 150% cap. The public proxy can trigger
+following week’s first close. The chart and decision history show signal
+targets before portfolio sizing. Breadth takes its full allocation first.
+The weekly S&P 500 overlay is limited to the equity room left under 145% of
+NAV, with a floor of zero. Cash and SHY contribute zero equity. Equity
+futures count at full notional. The five-point buffer allows drift up to
+150% between reviews. The public proxy can trigger
 on different dates from the strategy’s original input.
 
 The price chart and forward-return panels distinguish Pessimism from Deep
